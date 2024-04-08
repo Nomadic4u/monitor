@@ -1,11 +1,9 @@
 package org.example.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import org.example.entity.dto.Account;
 import org.example.entity.vo.request.ConfirmResetVO;
-import org.example.entity.vo.request.EmailRegisterVO;
 import org.example.entity.vo.request.EmailResetVO;
 import org.example.mapper.AccountMapper;
 import org.example.service.AccountService;
@@ -19,7 +17,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +37,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     @Resource
     PasswordEncoder passwordEncoder;
+
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -80,28 +78,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     }
 
-    @Override
-    public String registerEmailAccount(EmailRegisterVO vo) {
-        String email = vo.getEmail();
-        String name = vo.getName();
-        String code = stringRedisTemplate.opsForValue().get(Const.VERIFY_EMAIL_DATA + email);
-        if (code == null)
-            return "请先获取验证码";
-        if (!code.equals(vo.getCode()))
-            return "验证码输入错误, 请重新输入";
-        if (this.existsAccountByEmail(email))
-            return "此电子邮件已被其他用户注册";
-        if (this.existsAccountByName(name))
-            return "此用户名已被其他用户注册";
-        String password = passwordEncoder.encode(vo.getPassword());
-        Account account = new Account(null, name, password, email, "user", new Date());
-        if (!this.save(account)) {
-            return "内部错误请联系管理员";
-        }
-        // 删除redis中的验证码
-        stringRedisTemplate.delete(Const.VERIFY_EMAIL_DATA + email);
-        return null;
-    }
 
     // 重置验证码确认
     @Override
@@ -132,15 +108,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return null;
     }
 
-    // 通过邮件判断用户是否存在
-    private boolean existsAccountByEmail(String email) {
-        return this.baseMapper.exists(Wrappers.<Account>query().eq("email", email));
-    }
-
-    // 通过用户名判断用户是否存在
-    private boolean existsAccountByName(String name) {
-        return this.baseMapper.exists(Wrappers.<Account>query().eq("username", name));
-    }
 
     private boolean verifyLimit(String ip) {
         String key = Const.VERIFY_EMAIL_LIMIT + ip; // 根据ip限制;

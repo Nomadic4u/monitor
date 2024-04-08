@@ -42,11 +42,18 @@ public class SecurityConfiguration {
     @Resource
     AccountService accountService;
 
+    /**
+     * 针对于SpringSecurity 6 的新版配置方法
+     * @param http 配置器
+     * @return 自动构建的内置过滤器链
+     * @throws Exception 可能的异常
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(conf -> conf
                         .requestMatchers("api/auth/**", "/error").permitAll() //放行
+                        .requestMatchers("/monitor/**").permitAll() //放行
                         .anyRequest() // 任何请求都不允许通过
                         .authenticated() // 验证之后才能通过
 
