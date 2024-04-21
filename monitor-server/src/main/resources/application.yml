@@ -7,7 +7,7 @@ spring:
     username: root
     password: 20031213dmy
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/my_project
+    url: jdbc:mysql://localhost:3306/monitor
   mail:
     host: smtp.163.com
     username: 18989152637@163.com
