@@ -1,22 +1,25 @@
 package org.example.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import org.example.entity.dto.Client;
 import org.example.entity.dto.ClientDetail;
 import org.example.entity.vo.request.ClientDetailVo;
+import org.example.entity.vo.request.RenameClientVo;
+import org.example.entity.vo.request.RuntimeDetailVo;
+import org.example.entity.vo.response.ClientPreviewVo;
 import org.example.mapper.ClientDetailMapper;
 import org.example.mapper.ClientMapper;
 import org.example.service.ClientService;
+import org.example.utils.InfluxDbUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.util.Date;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
+import java.sql.Wrapper;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -31,6 +34,9 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
     @Resource
     ClientDetailMapper clientDetailMapper;
 
+    @Resource
+    InfluxDbUtils influxDbUtils;
+
     /**
      * 这个方法会在ClientServiceImpl被创建后执行
      */
@@ -44,7 +50,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
     public boolean verifyAndRegister(String token) {
         if (this.registerToken.equals(token)) {
             int id = this.randomClientId();
-            Client client = new Client(id, "未命名主机", token, new Date());
+            Client client = new Client(id, "未命名主机", token, "cn", "未命名节点",  new Date());
             if (this.save(client)) {
                 registerToken = this.generateNewToken(); // 重新生成一下token
                 this.addClientCache(client);
@@ -75,11 +81,48 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         ClientDetail detail = new ClientDetail();
         BeanUtils.copyProperties(vo, detail);
         detail.setId(client.getId());
-        if(Objects.nonNull(clientDetailMapper.selectById(client.getId()))) {
+        if (Objects.nonNull(clientDetailMapper.selectById(client.getId()))) {
             clientDetailMapper.updateById(detail);
         } else {
             clientDetailMapper.insert(detail); // 没有的话就直接插入
         }
+    }
+
+
+    // 存贮最近时间的运行时信息
+    private Map<Integer, RuntimeDetailVo> currentRuntime = new ConcurrentHashMap<>();
+
+    // 数据存入influxdb
+    @Override
+    public void updateRuntimeDetails(RuntimeDetailVo vo, Client client) {
+        currentRuntime.put(client.getId(), vo);
+        influxDbUtils.writeRuntimeData(client.getId(), vo);
+    }
+
+    @Override
+    public List<ClientPreviewVo> listAllClient() {
+
+        return clientIdCache.values().stream().map(client -> {
+            ClientPreviewVo vo = client.asViewObject(ClientPreviewVo.class);
+            BeanUtils.copyProperties(clientDetailMapper.selectById(vo.getId()), vo); // 缺失的数据再从数据库中查询
+            RuntimeDetailVo runtimeDetailVo = currentRuntime.get(client.getId());
+            // 如果最后一次更新的时间大于60秒, 说明已经离线了
+            if(runtimeDetailVo != null && System.currentTimeMillis() - runtimeDetailVo.getTimestamp() < 60 * 1000) {
+                BeanUtils.copyProperties(runtimeDetailVo, vo);
+                vo.setOnline(true);
+            }
+            return vo;
+        }).toList();
+    }
+
+    /**
+     * 服务器改名
+     * @param vo
+     */
+    @Override
+    public void renameClient(RenameClientVo vo) {
+        this.update(Wrappers.<Client>update().eq("id", vo.getId()).set("name", vo.getName()));
+        this.initClientCache();
     }
 
     private void addClientCache(Client client) {

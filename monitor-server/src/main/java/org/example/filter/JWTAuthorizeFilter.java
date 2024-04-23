@@ -42,6 +42,7 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
                 Client client = clientService.findClientByToken(authorization);
                 if (client == null) {
                     response.setStatus(401);
+                    response.setCharacterEncoding("UTF-8");
                     response.getWriter().write(RestBean.failure(401, "未注册").asJsonString());
                     return ;
                 } else {

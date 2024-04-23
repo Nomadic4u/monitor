@@ -49,7 +49,12 @@ public class JwtUtils {
         }
     }
 
-    // 设置一个token黑名单, 从而使token失效
+    /**
+     * 将Token列入Redis黑名单中
+     * @param uuid 令牌ID
+     * @param time 过期时间
+     * @return 是否操作成功
+     */
     private boolean deleteToken(String uuid, Date time) {
         if(this.isInvalidToken(uuid))
             return false;
@@ -59,12 +64,20 @@ public class JwtUtils {
         return true;
     }
 
-    // 判断token是否失效
+    /**
+     * 验证Token是否被列入Redis黑名单
+     * @param uuid 令牌ID
+     * @return 是否操作成功
+     */
     private boolean isInvalidToken(String uuid) {
         return Boolean.TRUE.equals(template.hasKey(Const.JWT_BLACK_LIST + uuid));
     }
 
-    // 解析token
+    /**
+     * 解析Jwt令牌
+     * @param headerToken 请求头中携带的令牌
+     * @return DecodedJWT
+     */
     public DecodedJWT resolveJwt(String headerToken) {
         String token = this.convertToken(headerToken);
         if (token == null)
@@ -98,13 +111,21 @@ public class JwtUtils {
 
     }
 
+    /**
+     * 根据配置快速计算过期时间
+     * @return 过期时间
+     */
     public Date expireTime() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR, expire * 24);
         return calendar.getTime();
     }
 
-    // 将jwt转变为UserDetails
+    /**
+     * 将jwt对象中的内容封装为UserDetails
+     * @param jwt 已解析的Jwt对象
+     * @return UserDetails
+     */
     public UserDetails toUser(DecodedJWT jwt) {
         Map<String, Claim> claims = jwt.getClaims();
         return User
@@ -114,13 +135,22 @@ public class JwtUtils {
                 .build();
     }
 
+    /**
+     * 将jwt对象中的用户ID提取出来
+     * @param jwt 已解析的Jwt对象
+     * @return 用户ID
+     */
     public Integer toId(DecodedJWT jwt) {
         Map<String, Claim> claims = jwt.getClaims();
         return claims.get("id").asInt();
     }
 
 
-    // 验证token
+    /**
+     * 校验并转换请求头中的Token令牌
+     * @param headerToken 请求头中的Token
+     * @return 转换后的令牌
+     */
     private String convertToken(String headerToken) {
         if (headerToken == null)
             return null;

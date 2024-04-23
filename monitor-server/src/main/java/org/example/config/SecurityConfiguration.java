@@ -54,6 +54,8 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(conf -> conf
                         .requestMatchers("api/auth/**", "/error").permitAll() //放行
                         .requestMatchers("/monitor/**").permitAll() //放行
+                        .requestMatchers("/**").permitAll() //放行
+                        .requestMatchers("api/monitor/**").permitAll() //放行
                         .anyRequest() // 任何请求都不允许通过
                         .authenticated() // 验证之后才能通过
 
@@ -123,13 +125,11 @@ public class SecurityConfiguration {
     public void onLogoutSuccess(HttpServletRequest request,
                                 HttpServletResponse response,
                                 Authentication authentication) throws IOException, ServletException {
-        response.setContentType("application/json");
-        response.setCharacterEncoding("utf-8");
+        response.setContentType("application/json;charset=utf-8");
         PrintWriter writer = response.getWriter();
         String authorization = request.getHeader("Authorization");
-        System.out.println(authorization);
         if(utils.invalidateJwt(authorization)) {
-            writer.write(RestBean.success().asJsonString());
+            writer.write(RestBean.success("退出登录成功").asJsonString());
         } else {
             writer.write(RestBean.failure(400, "退出登录失败").asJsonString());
         }

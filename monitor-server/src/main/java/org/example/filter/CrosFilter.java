@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.utils.Const;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +18,7 @@ import static org.example.utils.Const.ORDER_CORS;
  */
 
 @Component
-@Order(ORDER_CORS)
+@Order(Const.ORDER_CORS)
 public class CrosFilter extends HttpFilter {
     @Override
     protected void doFilter(HttpServletRequest request,

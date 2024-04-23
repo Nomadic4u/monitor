@@ -4,19 +4,24 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.example.entity.BaseData;
 
 import java.util.Date;
 
 @Data
 @TableName("db_client")
 @AllArgsConstructor
-public class Client {
+public class Client implements BaseData {
     @TableId
     Integer id;
 
     String name;
 
     String token;
+
+    String location;
+
+    String node;
 
     Date registerTime;
 }
