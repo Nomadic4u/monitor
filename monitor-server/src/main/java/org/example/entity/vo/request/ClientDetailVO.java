@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class ClientDetailVo {
+public class ClientDetailVO {
     @NotNull
     String osArch; //操作系统架构
 

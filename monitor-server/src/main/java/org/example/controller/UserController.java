@@ -1,0 +1,58 @@
+package org.example.controller;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+import org.example.entity.RestBean;
+import org.example.entity.vo.request.ChangePasswordVO;
+import org.example.entity.vo.request.CreateSubAccountVO;
+import org.example.entity.vo.response.SubAccountVO;
+import org.example.service.AccountService;
+import org.example.utils.Const;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping()
+public class UserController {
+
+    @Resource
+    AccountService service;
+
+    @PostMapping("/change-password")
+    public RestBean<Void> changePassword(@RequestBody @Valid ChangePasswordVO vo,
+                                         @RequestAttribute(Const.ATTR_USER_ID) int userId) {
+        return service.changePassword(userId, vo.getPassword(), vo.getNew_password()) ?
+                RestBean.success() : RestBean.failure(401, "原密码输入错误");
+    }
+
+    /**
+     * 创建子用户
+     */
+    @PostMapping("/sub/create")
+    public RestBean<Void> createSubAccount(@RequestBody @Valid CreateSubAccountVO vo) {
+        service.createSubAccount(vo);
+        return RestBean.success();
+    }
+
+    /**
+     * 删除子用户
+     */
+    @GetMapping("/sub/delete")
+    public RestBean<Void> deleteSubAccount(int uid,
+                                           @RequestAttribute(Const.ATTR_USER_ID) int userId) {
+        if (uid == userId) // 防止自己删自己
+            return RestBean.failure(401, "非法参数");
+        service.deleteSubAccount(uid);
+        return RestBean.success();
+    }
+
+    /**
+     * 获取当前账户的主机列表
+     */
+    @GetMapping("/sub/list")
+    public RestBean<List<SubAccountVO>> subAccountList() {
+        return RestBean.success(service.listSubAccount());
+    }
+
+}

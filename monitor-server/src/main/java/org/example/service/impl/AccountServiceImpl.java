@@ -1,10 +1,15 @@
 package org.example.service.impl;
 
+import com.alibaba.fastjson2.JSONArray;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.gson.JsonArray;
 import jakarta.annotation.Resource;
 import org.example.entity.dto.Account;
 import org.example.entity.vo.request.ConfirmResetVO;
+import org.example.entity.vo.request.CreateSubAccountVO;
 import org.example.entity.vo.request.EmailResetVO;
+import org.example.entity.vo.response.SubAccountVO;
 import org.example.mapper.AccountMapper;
 import org.example.service.AccountService;
 import org.example.utils.Const;
@@ -17,6 +22,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -106,6 +113,47 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             stringRedisTemplate.delete(Const.VERIFY_EMAIL_DATA + email);
         }
         return null;
+    }
+
+    @Override
+    public boolean changePassword(int id, String oldPassword, String newPassword) {
+        Account account = this.getById(id);
+        String password = account.getPassword();
+        if(!passwordEncoder.matches(oldPassword, password)) {
+            return false;
+        }
+
+        this.update(Wrappers.<Account>update().eq("id", id)
+                .set("password", password.matches(newPassword)));
+        return true;
+    }
+
+    @Override
+    public void createSubAccount(CreateSubAccountVO vo) {
+        Account account = this.findAccountByNameOrEmail(vo.getEmail());
+        if(account != null)
+            throw new IllegalArgumentException("该电子邮件被注册");
+        account = this.findAccountByNameOrEmail(vo.getUsername());
+        if(account != null)
+            throw new IllegalArgumentException("该用户名被注册");
+        account = new Account(null, vo.getUsername(), passwordEncoder.encode(vo.getPassword()), vo.getEmail(),
+                Const.ROLE_NORMAL, new Date(), JSONArray.copyOf(vo.getClient()).toJSONString());
+        this.save(account);
+    }
+
+    @Override
+    public void deleteSubAccount(int uid) {
+        this.removeById(uid);
+    }
+
+    @Override
+    public List<SubAccountVO> listSubAccount() {
+        return this.list(Wrappers.<Account>query().eq("role", Const.ROLE_NORMAL))
+                .stream().map(account -> {
+                    SubAccountVO vo = account.asViewObject(SubAccountVO.class);
+                    vo.setClientList(JSONArray.parse(account.getClients()));
+                    return vo;
+                }).toList();
     }
 
 

@@ -6,19 +6,20 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import org.example.entity.dto.Client;
 import org.example.entity.dto.ClientDetail;
-import org.example.entity.vo.request.ClientDetailVo;
-import org.example.entity.vo.request.RenameClientVo;
-import org.example.entity.vo.request.RuntimeDetailVo;
-import org.example.entity.vo.response.ClientPreviewVo;
+import org.example.entity.vo.request.*;
+import org.example.entity.vo.response.ClientDetailsVO;
+import org.example.entity.vo.response.ClientPreviewVO;
+import org.example.entity.vo.response.ClientSimpleVO;
+import org.example.entity.vo.response.RuntimeHistoryVO;
 import org.example.mapper.ClientDetailMapper;
 import org.example.mapper.ClientMapper;
 import org.example.service.ClientService;
 import org.example.utils.InfluxDbUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.sql.Wrapper;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -42,6 +43,8 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
      */
     @PostConstruct
     public void initClientCache() {
+        clientTokenCache.clear();
+        clientIdCache.clear(); // 因为add操作只会覆盖, 不会去清空, 需要手动的去清空
         this.list().forEach(this::addClientCache);
     }
 
@@ -77,7 +80,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 
     // 更新客户端的信息
     @Override
-    public void updateClientDetails(ClientDetailVo vo, Client client) {
+    public void updateClientDetails(ClientDetailVO vo, Client client) {
         ClientDetail detail = new ClientDetail();
         BeanUtils.copyProperties(vo, detail);
         detail.setId(client.getId());
@@ -90,22 +93,22 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 
 
     // 存贮最近时间的运行时信息
-    private Map<Integer, RuntimeDetailVo> currentRuntime = new ConcurrentHashMap<>();
+    private Map<Integer, RuntimeDetailVO> currentRuntime = new ConcurrentHashMap<>();
 
     // 数据存入influxdb
     @Override
-    public void updateRuntimeDetails(RuntimeDetailVo vo, Client client) {
+    public void updateRuntimeDetails(RuntimeDetailVO vo, Client client) {
         currentRuntime.put(client.getId(), vo);
         influxDbUtils.writeRuntimeData(client.getId(), vo);
     }
 
     @Override
-    public List<ClientPreviewVo> listAllClient() {
+    public List<ClientPreviewVO> listAllClient() {
 
         return clientIdCache.values().stream().map(client -> {
-            ClientPreviewVo vo = client.asViewObject(ClientPreviewVo.class);
+            ClientPreviewVO vo = client.asViewObject(ClientPreviewVO.class);
             BeanUtils.copyProperties(clientDetailMapper.selectById(vo.getId()), vo); // 缺失的数据再从数据库中查询
-            RuntimeDetailVo runtimeDetailVo = currentRuntime.get(client.getId());
+            RuntimeDetailVO runtimeDetailVo = currentRuntime.get(client.getId());
             // 如果最后一次更新的时间大于60秒, 说明已经离线了
             if(runtimeDetailVo != null && System.currentTimeMillis() - runtimeDetailVo.getTimestamp() < 60 * 1000) {
                 BeanUtils.copyProperties(runtimeDetailVo, vo);
@@ -120,9 +123,72 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
      * @param vo
      */
     @Override
-    public void renameClient(RenameClientVo vo) {
+    public void renameClient(RenameClientVO vo) {
         this.update(Wrappers.<Client>update().eq("id", vo.getId()).set("name", vo.getName()));
         this.initClientCache();
+    }
+
+    @Override
+    public ClientDetailsVO clientDetails(int clientId) {
+        ClientDetailsVO vo = this.clientIdCache.get(clientId).asViewObject(ClientDetailsVO.class);
+        BeanUtils.copyProperties(clientDetailMapper.selectById(clientId), vo);
+        vo.setOnline(this.isOnline(currentRuntime.get(clientId)));
+        return vo;
+    }
+
+    /**
+     * 获取服务器近一个小时的数据
+     * @param clientId
+     * @return
+     */
+    @Override
+    public RuntimeHistoryVO clientRuntimeDetailsHistory(int clientId) {
+        RuntimeHistoryVO vo = influxDbUtils.readRuntimeData(clientId);
+        ClientDetail detail = clientDetailMapper.selectById(clientId);
+        BeanUtils.copyProperties(detail, vo);
+        return vo;
+    }
+
+    /**
+     * 获取服务器当前的数据
+     * @param clientId
+     * @return
+     */
+    @Override
+    public RuntimeDetailVO clientRuntimeDetailsNow(int clientId) {
+        return currentRuntime.get(clientId);
+    }
+
+    @Override
+    public void deleteClient(int clientId) {
+        this.removeById(clientId);
+        clientDetailMapper.deleteById(clientId);
+        this.initClientCache();
+        currentRuntime.remove(clientId);
+    }
+
+    @Override
+    public List<ClientSimpleVO> listSimpleList() {
+        return clientIdCache.values().stream().map(client -> {
+            ClientSimpleVO vo = client.asViewObject(ClientSimpleVO.class);
+            BeanUtils.copyProperties(clientDetailMapper.selectById(vo.getId()), vo);
+            return vo;
+        }).toList();
+    }
+
+    /**
+     * 服务器节点重命名
+     * @param vo
+     */
+    @Override
+    public void renameNode(RenameNodeVO vo) {
+        this.update(Wrappers.<Client>update().eq("id", vo.getId())
+                .set("node", vo.getNode()).set("location", vo.getLocation()));
+        this.initClientCache();
+    }
+
+    private boolean isOnline(RuntimeDetailVO runtime) {
+        return runtime != null && System.currentTimeMillis() - runtime.getTimestamp() < 60 * 1000;
     }
 
     private void addClientCache(Client client) {

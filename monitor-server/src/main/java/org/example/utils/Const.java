@@ -5,6 +5,9 @@ public class Const {
     public static final String JWT_BLACK_LIST = "jwt:blacklist:";
     public final static String JWT_FREQUENCY = "jwt:frequency";
 
+    // 用户
+    public final static String USER_BLACK_LIST = "user:blacklist:";
+
     // 邮件验证码
     public static final String VERIFY_EMAIL_LIMIT = "verify:email:limit";
     public static final String VERIFY_EMAIL_DATA = "verify:email:data";
@@ -19,11 +22,13 @@ public class Const {
 
     // 请求自定义属性
     public final static String ATTR_USER_ID = "userId";
+    public final static String ATTR_USER_ROLE = "userRole";
     public final static String ATTR_CLIENT = "client";
 
     // 消息队列
     public final String MQ_MAIL = "mail";
 
     // 用户角色
-    public final static String ROLE_DEFAULT = "user";
+    public final static String ROLE_ADMIN = "admin";
+    public final static String ROLE_NORMAL = "user";
 }

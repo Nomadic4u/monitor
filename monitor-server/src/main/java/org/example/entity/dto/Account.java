@@ -1,5 +1,6 @@
 package org.example.entity.dto;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -8,7 +9,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.entity.BaseData;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @TableName("db_account")
@@ -22,4 +25,11 @@ public class Account implements BaseData {
     String email;
     String role;
     Date registerTime;
+    String clients;
+
+    public List<Integer> getClientList() {
+        if(clients == null)
+            return Collections.emptyList();
+        return JSONArray.parse(clients).toJavaList(Integer.class);
+    }
 }

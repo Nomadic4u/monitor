@@ -3,7 +3,7 @@ package org.example.entity.vo.response;
 import lombok.Data;
 
 @Data
-public class ClientPreviewVo {
+public class ClientPreviewVO {
     int id; // 服务器id
     boolean online; // 运行的状态
     String name;

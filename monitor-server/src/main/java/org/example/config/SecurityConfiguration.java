@@ -10,6 +10,7 @@ import org.example.entity.dto.Account;
 import org.example.entity.vo.response.AuthorizeVO;
 import org.example.filter.JWTAuthorizeFilter;
 import org.example.service.AccountService;
+import org.example.utils.Const;
 import org.example.utils.JwtUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Bean;
@@ -44,6 +45,7 @@ public class SecurityConfiguration {
 
     /**
      * 针对于SpringSecurity 6 的新版配置方法
+     *
      * @param http 配置器
      * @return 自动构建的内置过滤器链
      * @throws Exception 可能的异常
@@ -52,13 +54,13 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(conf -> conf
-                        .requestMatchers("api/auth/**", "/error").permitAll() //放行
-                        .requestMatchers("/monitor/**").permitAll() //放行
-                        .requestMatchers("/**").permitAll() //放行
-                        .requestMatchers("api/monitor/**").permitAll() //放行
-                        .anyRequest() // 任何请求都不允许通过
-                        .authenticated() // 验证之后才能通过
-
+                                .requestMatchers("api/auth/**", "/error").permitAll() //放行
+                                .requestMatchers("/monitor/**").permitAll() //放行
+                                .requestMatchers("api/monitor/**").permitAll() //放行
+                                .requestMatchers("api/user/sub/**").hasRole(Const.ROLE_ADMIN) // 创建子用户必须是管理员
+                                .anyRequest() // 任何请求都不允许通过
+                                .hasAnyRole(Const.ROLE_ADMIN, Const.ROLE_NORMAL)
+//                               .authenticated() // 验证之后才能通过
                 )
                 .formLogin(conf -> conf
                         .loginProcessingUrl("/api/auth/login") //登录的路径 登录用户名默认为username
@@ -105,7 +107,7 @@ public class SecurityConfiguration {
         User user = (User) authentication.getPrincipal(); // 这里是SpringSecurity的user
         Account account = accountService.findAccountByNameOrEmail(user.getUsername());
         String token = utils.CreateJwt(user, account.getId(), account.getUsername());
-        AuthorizeVO vo = account.asViewObject(AuthorizeVO.class, v ->{
+        AuthorizeVO vo = account.asViewObject(AuthorizeVO.class, v -> {
             v.setExpire(utils.expireTime());
             v.setToken(token);
         });
@@ -128,7 +130,7 @@ public class SecurityConfiguration {
         response.setContentType("application/json;charset=utf-8");
         PrintWriter writer = response.getWriter();
         String authorization = request.getHeader("Authorization");
-        if(utils.invalidateJwt(authorization)) {
+        if (utils.invalidateJwt(authorization)) {
             writer.write(RestBean.success("退出登录成功").asJsonString());
         } else {
             writer.write(RestBean.failure(400, "退出登录失败").asJsonString());

@@ -88,7 +88,8 @@ public class JwtUtils {
             DecodedJWT verify = jwtVerifier.verify(token); //验证token是否被篡改,然后解码 如果被篡改会抛出一个异常
             if(this.isInvalidToken(verify.getId())) // 判断token是否在黑名单中
                 return null;
-
+            if(this.isInvalidUser(verify.getClaim("id").asInt())) // 检验用户是否删除 即被uid被拉黑
+                return null;
             Date expiresAt = verify.getExpiresAt(); // 获取过期的日期
             return new Date().after(expiresAt) ? null : verify; //判断是否过期, 如果没有过期, 则返回解析后的JWT
         } catch (JWTVerificationException e) {
@@ -155,5 +156,23 @@ public class JwtUtils {
         if (headerToken == null)
             return null;
         return headerToken.substring(7);
+    }
+
+
+    /**
+     * 将删除的用户拉入黑名单
+     * @param uid
+     */
+    private void deleteUser(int uid) {
+        template.opsForValue().set(Const.USER_BLACK_LIST + uid, "", expire, TimeUnit.HOURS);
+    }
+
+    /**
+     * 验证用户是否在黑名单中
+     * @param uid
+     * @return
+     */
+    private boolean isInvalidUser(int uid) {
+        return Boolean.TRUE.equals(template.hasKey(Const.USER_BLACK_LIST + uid));
     }
 }

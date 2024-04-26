@@ -4,8 +4,8 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.example.entity.RestBean;
 import org.example.entity.dto.Client;
-import org.example.entity.vo.request.ClientDetailVo;
-import org.example.entity.vo.request.RuntimeDetailVo;
+import org.example.entity.vo.request.ClientDetailVO;
+import org.example.entity.vo.request.RuntimeDetailVO;
 import org.example.service.ClientService;
 import org.example.utils.Const;
 import org.springframework.web.bind.annotation.*;
@@ -24,14 +24,14 @@ public class ClientController {
 
     @PostMapping("/detail")
     public RestBean<Void> updateClientDetails(@RequestAttribute(Const.ATTR_CLIENT)Client client,
-                                              @RequestBody @Valid ClientDetailVo vo) {
+                                              @RequestBody @Valid ClientDetailVO vo) {
         clientService.updateClientDetails(vo,  client);
         return RestBean.success();
     }
 
     @PostMapping("/runtime")
     public RestBean<Void> updateRuntimeDetails(@RequestAttribute(Const.ATTR_CLIENT) Client client,
-                                               @RequestBody @Valid RuntimeDetailVo vo) {
+                                               @RequestBody @Valid RuntimeDetailVO vo) {
         clientService.updateRuntimeDetails(vo, client);
         return RestBean.success();
     }

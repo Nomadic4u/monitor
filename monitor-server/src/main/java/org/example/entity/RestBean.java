@@ -2,7 +2,11 @@ package org.example.entity;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONWriter;
+import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
+
+import javax.swing.text.html.Option;
+import java.util.Optional;
 
 public record RestBean<T>(int code, T data, String message) {
     public static <T> RestBean<T> success(T data) {
@@ -26,5 +30,16 @@ public record RestBean<T>(int code, T data, String message) {
 
     public String asJsonString() {
         return JSONObject.toJSONString(this, JSONWriter.Feature.WriteNulls);
+    }
+
+    public static <T> RestBean<T> noPermission() {
+        return new RestBean<>()
+    }
+
+    // 获取当前请求的ID
+    public static long requestId() {
+        String reqId = Optional.ofNullable(MDC.get("reqId")).orElse("0");
+        return Long.parseLong(reqId);
+
     }
 }

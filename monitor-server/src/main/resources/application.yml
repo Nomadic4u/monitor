@@ -23,13 +23,18 @@ spring:
     password: 20031213dmyD!
     virtual-host: mail
   web:
-    verify:
-      mail-limit: 60
-    flow:
-      period: 5
-      limit: 100
-      block: 30
+#    verify:
+#      mail-limit: 60
+#    flow:
+#      period: 5
+#      limit: 100
+#      block: 30
     cors:
       origin: '*'
       credentials: false
       methods: '*'
+  data:
+    redis:
+      port: 6379
+      host: 8.137.50.120
+      password: 20031213dmy
