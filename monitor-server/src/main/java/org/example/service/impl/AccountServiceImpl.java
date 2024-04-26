@@ -9,6 +9,7 @@ import org.example.entity.dto.Account;
 import org.example.entity.vo.request.ConfirmResetVO;
 import org.example.entity.vo.request.CreateSubAccountVO;
 import org.example.entity.vo.request.EmailResetVO;
+import org.example.entity.vo.request.ModifyEmailVO;
 import org.example.entity.vo.response.SubAccountVO;
 import org.example.mapper.AccountMapper;
 import org.example.service.AccountService;
@@ -156,9 +157,52 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 }).toList();
     }
 
+    @Override
+    public String modifyEmail(int id, ModifyEmailVO vo) {
+        String code = getEmailVerifyCode(vo.getEmail());
+        if(code == null)
+            return "请先获取验证码";
+        if(!code.equals(vo.getCode()))
+            return "验证码错误, 请重新输入";
+        this.deleteEmailVerifyCode(vo.getEmail());
+        Account account = this.findAccountByNameOrEmail(vo.getEmail());
+        if(account != null && account.getId() != id)
+            return "该邮箱已被其他账号绑定, 无法完成操作";
+        this.update()
+                .eq("id", id)
+                .set("email", vo.getEmail())
+                .update();
+        return null;
+    }
 
+
+    /**
+     * 移除Redis中存储的邮件验证码
+     * @param email 电邮
+     */
+    private void deleteEmailVerifyCode(String email) {
+        String key = Const.VERIFY_EMAIL_DATA + email;
+        stringRedisTemplate.delete(key);
+    }
+
+
+    /**
+     * 针对IP地址进行邮件验证码获取限流
+     * @param ip 地址
+     * @return 是否通过验证
+     */
     private boolean verifyLimit(String ip) {
         String key = Const.VERIFY_EMAIL_LIMIT + ip; // 根据ip限制;
         return utils.limitOnceCheck(key, 60);
+    }
+
+    /**
+     * 获取Redis中存储的邮件验证码
+     * @param email 电邮
+     * @return 验证码
+     */
+    private String getEmailVerifyCode(String email) {
+        String key = Const.VERIFY_EMAIL_DATA + email;
+        return stringRedisTemplate.opsForValue().get(key);
     }
 }

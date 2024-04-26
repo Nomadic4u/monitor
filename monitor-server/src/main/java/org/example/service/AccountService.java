@@ -5,6 +5,7 @@ import org.example.entity.dto.Account;
 import org.example.entity.vo.request.ConfirmResetVO;
 import org.example.entity.vo.request.CreateSubAccountVO;
 import org.example.entity.vo.request.EmailResetVO;
+import org.example.entity.vo.request.ModifyEmailVO;
 import org.example.entity.vo.response.SubAccountVO;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,8 @@ public interface AccountService extends IService<Account>, UserDetailsService {
     void deleteSubAccount(int uid);
 
     List<SubAccountVO> listSubAccount();
+
+    String modifyEmail(int id, ModifyEmailVO vo);
 }
 
 

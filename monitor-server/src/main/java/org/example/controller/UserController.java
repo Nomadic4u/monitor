@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.example.entity.RestBean;
 import org.example.entity.vo.request.ChangePasswordVO;
 import org.example.entity.vo.request.CreateSubAccountVO;
+import org.example.entity.vo.request.ModifyEmailVO;
 import org.example.entity.vo.response.SubAccountVO;
 import org.example.service.AccountService;
 import org.example.utils.Const;
@@ -24,6 +25,15 @@ public class UserController {
                                          @RequestAttribute(Const.ATTR_USER_ID) int userId) {
         return service.changePassword(userId, vo.getPassword(), vo.getNew_password()) ?
                 RestBean.success() : RestBean.failure(401, "原密码输入错误");
+    }
+
+    @PostMapping("/modify-email")
+    public RestBean<Void> modify_email(@RequestAttribute(Const.ATTR_USER_ID) int userId,
+                                       @RequestBody @Valid ModifyEmailVO vo) {
+        String result = service.modifyEmail(userId, vo);
+        if(result != null)
+            return RestBean.failure(401, result);
+        return RestBean.success();
     }
 
     /**

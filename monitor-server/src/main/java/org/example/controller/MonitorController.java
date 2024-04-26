@@ -35,7 +35,7 @@ public class MonitorController {
     public RestBean<List<ClientPreviewVO>> listAllClient(@RequestAttribute(Const.ATTR_USER_ID) int userID,
                                                          @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
         List<ClientPreviewVO> list = service.listAllClient(); // 先获取所有的客户端
-        if(this.isAdminAccount(userRole))
+        if (this.isAdminAccount(userRole))
             return RestBean.success(list);
         List<Integer> ids = this.accountAccessClient(userID);
         return RestBean.success(list.stream()
@@ -44,47 +44,83 @@ public class MonitorController {
     }
 
     @GetMapping("/simple-list")
-    public RestBean<List<ClientSimpleVO>> simpleClientList() {
-        return RestBean.success(service.listSimpleList());
+    public RestBean<List<ClientSimpleVO>> simpleClientList(@RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
+        if (this.isAdminAccount(userRole))
+            return RestBean.success(service.listSimpleList());
+        else {
+
+            return RestBean.noPermission();
+        }
     }
 
     @PostMapping("/rename")
-    public RestBean<Void> renameClient(@RequestBody @Valid RenameClientVO vo) {
-        service.renameClient(vo);
-        return RestBean.success();
+    public RestBean<Void> renameClient(@RequestBody @Valid RenameClientVO vo,
+                                       @RequestAttribute(Const.ATTR_USER_ID) int userID,
+                                       @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
+        if (this.permissionCheck(userID, userRole, vo.getId())) {
+            service.renameClient(vo);
+            return RestBean.success();
+        }
+        return RestBean.noPermission();
     }
 
     @PostMapping("/node")
-    public RestBean<Void> renameNode(@RequestBody @Valid RenameNodeVO vo) {
-        service.renameNode(vo);
-        return RestBean.success();
+    public RestBean<Void> renameNode(@RequestBody @Valid RenameNodeVO vo,
+                                     @RequestAttribute(Const.ATTR_USER_ID) int userID,
+                                     @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
+        if (this.permissionCheck(userID, userRole, vo.getId())) {
+            service.renameNode(vo);
+            return RestBean.success();
+        }
+        return RestBean.noPermission();
     }
 
 
     @GetMapping("/details")
-    public RestBean<ClientDetailsVO> details(int clientId) {
-        return RestBean.success(service.clientDetails(clientId));
+    public RestBean<ClientDetailsVO> details(int clientId,
+                                             @RequestAttribute(Const.ATTR_USER_ID) int userID,
+                                             @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
+        if (this.permissionCheck(userID, userRole, clientId)) {
+            return RestBean.success(service.clientDetails(clientId));
+        }
+        return RestBean.noPermission();
     }
 
     @GetMapping("/runtime-history")
-    public RestBean<RuntimeHistoryVO> runtimeDetailsHistory(int clientId) {
-        return RestBean.success(service.clientRuntimeDetailsHistory(clientId));
+    public RestBean<RuntimeHistoryVO> runtimeDetailsHistory(int clientId,
+                                                            @RequestAttribute(Const.ATTR_USER_ID) int userID,
+                                                            @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
+        if (this.permissionCheck(userID, userRole, clientId)) {
+            return RestBean.success(service.clientRuntimeDetailsHistory(clientId));
+        }
+        return RestBean.noPermission();
     }
 
     @GetMapping("/runtime-now")
-    public RestBean<RuntimeDetailVO> runtimeDetailsNow(int clientId) {
-        return RestBean.success(service.clientRuntimeDetailsNow(clientId));
+    public RestBean<RuntimeDetailVO> runtimeDetailsNow(int clientId,
+                                                       @RequestAttribute(Const.ATTR_USER_ID) int userID,
+                                                       @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
+        if (this.permissionCheck(userID, userRole, clientId)) {
+            return RestBean.success(service.clientRuntimeDetailsNow(clientId));
+        }
+        return RestBean.noPermission();
     }
 
     @GetMapping("/register")
-    public RestBean<String> registerToken() {
-        return RestBean.success(service.registerTOken());
+    public RestBean<String> registerToken(@RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
+        if(this.isAdminAccount(userRole))
+            return RestBean.success(service.registerTOken());
+        return RestBean.noPermission();
     }
 
     @GetMapping("/delete")
-    public RestBean<String> deleteClient(int clientId) {
-        service.deleteClient(clientId);
-        return RestBean.success();
+    public RestBean<String> deleteClient(int clientId,
+                                         @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
+        if(this.isAdminAccount(userRole)) {
+            service.deleteClient(clientId);
+            return RestBean.success();
+        }
+        return RestBean.noPermission();
     }
 
     private List<Integer> accountAccessClient(int uid) {
@@ -99,6 +135,12 @@ public class MonitorController {
         // Spring的role一般带有前缀"ROLE_", 这里要先去掉
         role = role.substring(5);
         return Const.ROLE_ADMIN.equals(role);
+    }
+
+    private boolean permissionCheck(int uid, String role, int clientId) {
+        if (this.isAdminAccount(role))
+            return true;
+        return this.accountAccessClient(uid).contains(clientId);
     }
 
 }

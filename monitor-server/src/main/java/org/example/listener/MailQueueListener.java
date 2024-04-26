@@ -27,6 +27,8 @@ public class MailQueueListener {
         SimpleMailMessage message = switch (type) {
             case "reset" -> createMessage("您的密码重置邮件",
                     "你好, 您正在进行重置密码操作, 验证码: " + code + "有效时间3分钟", email);
+            case "modify" -> createMessage("您的邮件修改邮件",
+                    "你好, 您正在绑定新的电子邮箱, 验证码: " + code + "有效时间3分钟", email);
             default -> null;
         };
         if (message == null)

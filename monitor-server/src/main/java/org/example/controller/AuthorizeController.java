@@ -30,7 +30,7 @@ public class AuthorizeController {
      */
     @GetMapping("ask-code")
     public RestBean<Void> askVerifyCode(@RequestParam @Email String email, // 参数校验
-                                        @RequestParam @Pattern(regexp = "(reset)") String type, // type代表这是重置密码的邮件还是注册的邮件
+                                        @RequestParam @Pattern(regexp = "(reset|modify)") String type, // type代表这是重置密码的邮件还是重置邮件的
                                         HttpServletRequest request) { // 取IP地址
 
         return this.messageHandle(() -> accountService.registerEmailVerifyCode(type, email, request.getRemoteAddr()));
