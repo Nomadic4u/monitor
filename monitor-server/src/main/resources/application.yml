@@ -3,6 +3,12 @@ spring:
     jwt:
       key: abcdefghijk
       expire: 7
+      limit:
+        base: 10
+        upgrade: 300
+        frequency: 30
+      filter:
+        order: -100
   influx:
     url: http://8.137.50.120:8086
     user: admin
@@ -23,12 +29,12 @@ spring:
     password: 20031213dmyD!
     virtual-host: mail
   web:
-#    verify:
-#      mail-limit: 60
-#    flow:
-#      period: 5
-#      limit: 100
-#      block: 30
+    verify:
+      mail-limit: 60
+    flow:
+      period: 5
+      limit: 100
+      block: 30
     cors:
       origin: '*'
       credentials: false

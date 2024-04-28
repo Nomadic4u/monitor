@@ -59,7 +59,7 @@ public class FlowLimitFilter extends HttpFilter {
                 return false;
             }
         } else {
-            template.opsForValue().set(Const.FLOW_LIMIT_COUNTER + ip, "1", 3, TimeUnit.SECONDS);
+            template.opsForValue().set(Const.FLOW_LIMIT_COUNTER + ip, "1", 30, TimeUnit.SECONDS);
 
         }
         return true;

@@ -13,7 +13,7 @@ public class Const {
     public static final String VERIFY_EMAIL_DATA = "verify:email:data";
 
     // 过滤器优先级
-    public static final int ORDER_CORS = -102;
+    public static final int ORDER_CORS = -103;
     public static final int ORDER_LIMIT = -101;
 
     // 请求限制频率

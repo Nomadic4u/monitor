@@ -7,7 +7,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.example.entity.RestBean;
+import org.example.entity.dto.Account;
 import org.example.entity.dto.Client;
+import org.example.service.AccountService;
 import org.example.service.ClientService;
 import org.example.utils.Const;
 import org.example.utils.JwtUtils;
@@ -51,18 +53,40 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
                 }
             }
         } else {
-            DecodedJWT jwt = utils.resolveJwt(authorization); // 解析token
-            if (jwt != null) {
+            DecodedJWT jwt = utils.resolveJwt(authorization);
+            if(jwt != null) {
                 UserDetails user = utils.toUser(jwt);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication); // 将认证消息丢进去表示已经认证过了
-                request.setAttribute("id", utils.toId(jwt));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                request.setAttribute(Const.ATTR_USER_ID, utils.toId(jwt));
                 request.setAttribute(Const.ATTR_USER_ROLE, new ArrayList<>(user.getAuthorities()).get(0).getAuthority());
+
+                if(request.getRequestURI().startsWith("/terminal/") && !accessShell(
+                        (int) request.getAttribute(Const.ATTR_USER_ID),
+                        (String) request.getAttribute(Const.ATTR_USER_ROLE),
+                        Integer.parseInt(request.getRequestURI().substring(10)))) {
+                    response.setStatus(401);
+                    response.setCharacterEncoding("utf-8");
+                    response.getWriter().write(RestBean.failure(401, "无权访问").asJsonString());
+                    return;
+                }
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    @Resource
+    AccountService accountService;
+
+    private boolean accessShell(int userId, String userRole, int clientId) {
+        if(Const.ROLE_ADMIN.equals(userRole.substring(5))) {
+            return true;
+        } else {
+            Account account = accountService.getById(userId);
+            return account.getClientList().contains(clientId);
+        }
     }
 }
 

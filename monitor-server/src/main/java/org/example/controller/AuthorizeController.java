@@ -33,7 +33,7 @@ public class AuthorizeController {
                                         @RequestParam @Pattern(regexp = "(reset|modify)") String type, // type代表这是重置密码的邮件还是重置邮件的
                                         HttpServletRequest request) { // 取IP地址
 
-        return this.messageHandle(() -> accountService.registerEmailVerifyCode(type, email, request.getRemoteAddr()));
+        return this.messageHandle(() -> accountService.registerEmailVerifyCode(type, String.valueOf(email), request.getRemoteAddr()));
 
     }
 
@@ -55,6 +55,7 @@ public class AuthorizeController {
      */
     @PostMapping("/reset-password")
     public RestBean<Void> resetPassword(@RequestBody @Valid EmailResetVO vo) {
+        System.out.println(vo);
         return this.messageHandle(() -> accountService.resetEmailAccountPassword(vo));
     }
 

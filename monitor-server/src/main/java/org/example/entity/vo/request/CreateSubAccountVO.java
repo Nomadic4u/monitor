@@ -19,5 +19,5 @@ public class CreateSubAccountVO {
     String password;
 
     @Size(min = 1)
-    List<Integer> client;
+    List<Integer> clients;
 }

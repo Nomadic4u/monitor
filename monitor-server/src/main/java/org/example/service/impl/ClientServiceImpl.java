@@ -6,13 +6,12 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import org.example.entity.dto.Client;
 import org.example.entity.dto.ClientDetail;
+import org.example.entity.dto.ClientSsh;
 import org.example.entity.vo.request.*;
-import org.example.entity.vo.response.ClientDetailsVO;
-import org.example.entity.vo.response.ClientPreviewVO;
-import org.example.entity.vo.response.ClientSimpleVO;
-import org.example.entity.vo.response.RuntimeHistoryVO;
+import org.example.entity.vo.response.*;
 import org.example.mapper.ClientDetailMapper;
 import org.example.mapper.ClientMapper;
+import org.example.mapper.ClientSshMapper;
 import org.example.service.ClientService;
 import org.example.utils.InfluxDbUtils;
 import org.springframework.beans.BeanUtils;
@@ -34,6 +33,9 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 
     @Resource
     ClientDetailMapper clientDetailMapper;
+
+    @Resource
+    ClientSshMapper clientSshMapper;
 
     @Resource
     InfluxDbUtils influxDbUtils;
@@ -174,6 +176,39 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
             BeanUtils.copyProperties(clientDetailMapper.selectById(vo.getId()), vo);
             return vo;
         }).toList();
+    }
+
+    @Override
+    public void saveClientSshConnection(SshConnectionVO vo) {
+        Client client = this.clientIdCache.get(vo.getId());
+        if(client == null)
+            return;
+        ClientSsh ssh = new ClientSsh();
+        BeanUtils.copyProperties(vo, ssh);
+        if(Objects.nonNull(clientSshMapper.selectById(client.getId()))) {
+            clientSshMapper.updateById(ssh);
+        } else {
+            clientSshMapper.insert(ssh);
+        }
+    }
+
+    /**
+     * 查询ssh连接信息
+     * @param clientId
+     * @return
+     */
+    @Override
+    public SshSettingVO sshSettings(int clientId) {
+        ClientDetail detail = clientDetailMapper.selectById(clientId);
+        ClientSsh ssh = clientSshMapper.selectById(clientId);
+        SshSettingVO vo;
+        if(ssh == null) {
+            vo = new SshSettingVO();
+        } else {
+            vo = ssh.asViewObject(SshSettingVO.class);
+        }
+        vo.setIp(detail.getId());
+        return null;
     }
 
     /**

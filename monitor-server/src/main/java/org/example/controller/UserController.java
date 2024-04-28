@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping()
+@RequestMapping("/api/user")
 public class UserController {
 
     @Resource
@@ -23,6 +23,8 @@ public class UserController {
     @PostMapping("/change-password")
     public RestBean<Void> changePassword(@RequestBody @Valid ChangePasswordVO vo,
                                          @RequestAttribute(Const.ATTR_USER_ID) int userId) {
+        System.out.println("VO :" + vo);
+        System.out.println("userId: " + userId);
         return service.changePassword(userId, vo.getPassword(), vo.getNew_password()) ?
                 RestBean.success() : RestBean.failure(401, "原密码输入错误");
     }

@@ -3,10 +3,7 @@ package org.example.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.example.entity.dto.Client;
 import org.example.entity.vo.request.*;
-import org.example.entity.vo.response.ClientDetailsVO;
-import org.example.entity.vo.response.ClientPreviewVO;
-import org.example.entity.vo.response.ClientSimpleVO;
-import org.example.entity.vo.response.RuntimeHistoryVO;
+import org.example.entity.vo.response.*;
 
 import java.util.List;
 
@@ -41,4 +38,8 @@ public interface ClientService extends IService<Client> {
     void deleteClient(int clientId);
 
     List<ClientSimpleVO> listSimpleList();
+
+    void saveClientSshConnection(SshConnectionVO vo);
+
+    SshSettingVO sshSettings(int clientId);
 }

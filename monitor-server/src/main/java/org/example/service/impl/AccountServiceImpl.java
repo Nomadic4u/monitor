@@ -96,7 +96,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             return "请先获取验证码";
         if(!code.equals(vo.getCode()))
             return "验证码输入错误, 请重新输入";
-        stringRedisTemplate.delete(Const.VERIFY_EMAIL_DATA + email);
         return null;
     }
 
@@ -120,17 +119,20 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     public boolean changePassword(int id, String oldPassword, String newPassword) {
         Account account = this.getById(id);
         String password = account.getPassword();
+        System.out.println("account: " + account);
+        System.out.println("pass: " + password);
         if(!passwordEncoder.matches(oldPassword, password)) {
             return false;
         }
 
         this.update(Wrappers.<Account>update().eq("id", id)
-                .set("password", password.matches(newPassword)));
+                .set("password", passwordEncoder.encode(newPassword)));
         return true;
     }
 
     @Override
     public void createSubAccount(CreateSubAccountVO vo) {
+//        System.out.println("vo: " + vo);
         Account account = this.findAccountByNameOrEmail(vo.getEmail());
         if(account != null)
             throw new IllegalArgumentException("该电子邮件被注册");
@@ -138,7 +140,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if(account != null)
             throw new IllegalArgumentException("该用户名被注册");
         account = new Account(null, vo.getUsername(), passwordEncoder.encode(vo.getPassword()), vo.getEmail(),
-                Const.ROLE_NORMAL, new Date(), JSONArray.copyOf(vo.getClient()).toJSONString());
+                Const.ROLE_NORMAL, new Date(), JSONArray.copyOf(vo.getClients()).toJSONString());
         this.save(account);
     }
 

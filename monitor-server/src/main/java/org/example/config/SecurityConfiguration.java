@@ -9,6 +9,7 @@ import org.example.entity.RestBean;
 import org.example.entity.dto.Account;
 import org.example.entity.vo.response.AuthorizeVO;
 import org.example.filter.JWTAuthorizeFilter;
+import org.example.filter.RequestLogFilter;
 import org.example.service.AccountService;
 import org.example.utils.Const;
 import org.example.utils.JwtUtils;
@@ -23,13 +24,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 
 @Configuration
 public class SecurityConfiguration {
@@ -43,6 +44,9 @@ public class SecurityConfiguration {
     @Resource
     AccountService accountService;
 
+    @Resource
+    RequestLogFilter requestLogFilter;
+
     /**
      * 针对于SpringSecurity 6 的新版配置方法
      *
@@ -55,6 +59,7 @@ public class SecurityConfiguration {
         return http
                 .authorizeHttpRequests(conf -> conf
                                 .requestMatchers("api/auth/**", "/error").permitAll() //放行
+                                .requestMatchers("/terminal/**").permitAll() //放行
                                 .requestMatchers("/monitor/**").permitAll() //放行
                                 .requestMatchers("api/monitor/**").permitAll() //放行
                                 .requestMatchers("api/user/sub/**").hasRole(Const.ROLE_ADMIN) // 创建子用户必须是管理员
@@ -66,6 +71,7 @@ public class SecurityConfiguration {
                         .loginProcessingUrl("/api/auth/login") //登录的路径 登录用户名默认为username
                         .failureHandler(this::onAuthenticationFailure)
                         .successHandler(this::onAuthenticationSuccess) // 登录成功
+                        .permitAll()
                 )
                 .logout(conf -> conf
                         .logoutUrl("/api/auth/logout") //退出的路径
@@ -78,7 +84,8 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(conf -> conf
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthorizeFilter, UsernamePasswordAuthenticationFilter.class) // 过滤器
+                .addFilterBefore(requestLogFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthorizeFilter, RequestLogFilter.class) // 过滤器
                 .build();
     }
 
@@ -136,6 +143,7 @@ public class SecurityConfiguration {
             writer.write(RestBean.failure(400, "退出登录失败").asJsonString());
         }
     }
+
 }
 
 
