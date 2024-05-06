@@ -37,7 +37,7 @@ public class ServerConfiguration implements ApplicationRunner {
         ConnectionConfig config = this.readConfigurationFromFile();
         if (config == null)
             config = this.registerToServer();
-        System.out.println(monitor.monitorBaseDetail());
+//        System.out.println(monitor.monitorBaseDetail());
         return config;
     }
 

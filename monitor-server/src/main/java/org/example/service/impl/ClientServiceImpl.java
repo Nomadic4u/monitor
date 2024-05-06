@@ -207,8 +207,8 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         } else {
             vo = ssh.asViewObject(SshSettingVO.class);
         }
-        vo.setIp(detail.getId());
-        return null;
+        vo.setIp(detail.getIp());
+        return vo;
     }
 
     /**

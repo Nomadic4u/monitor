@@ -56,6 +56,7 @@ public class NetUtils {
                     .header("Authorization", token)
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println("TTT: "+ response.body());
             return JSONObject.parseObject(response.body()).to(Response.class);
         } catch (Exception e) {
             log.error("在发起服务端请求时出现错误", e);
@@ -65,6 +66,8 @@ public class NetUtils {
 
     public void updateBaseDetails(BaseDetail detail) {
         Response response = this.doPost("/detail", detail);
+        System.out.println("request: : "+ detail);
+        System.out.println("response:  "+ response);
         if(response.sucess()) {
             log.info("系统基本信息已更新完成");
         } else {

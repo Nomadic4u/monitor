@@ -87,10 +87,10 @@ public class MonitorController {
 
     @GetMapping("/runtime-history")
     public RestBean<RuntimeHistoryVO> runtimeDetailsHistory(int clientId,
-                                                            @RequestAttribute(Const.ATTR_USER_ID) int userID,
+                                                            @RequestAttribute(Const.ATTR_USER_ID) int userId,
                                                             @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
-        System.out.println("userId: " + userID + " userRole: " + userRole + " clientId: " + clientId);
-        if (this.permissionCheck(userID, userRole, clientId)) {
+        System.out.println("userId: " + userId + " userRole: " + userRole + " clientId: " + clientId);
+        if (this.permissionCheck(userId, userRole, clientId)) {
             return RestBean.success(service.clientRuntimeDetailsHistory(clientId));
         }
         return RestBean.noPermission();
@@ -135,11 +135,11 @@ public class MonitorController {
     }
 
     @GetMapping("/ssh")
-    public RestBean<SshSettingVO> sshSettings(int ClientId,
+    public RestBean<SshSettingVO> sshSettings(int clientId,
                                               @RequestAttribute(Const.ATTR_USER_ID) int userID,
                                               @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
-        if (this.permissionCheck(userID, userRole, ClientId)) {
-            return RestBean.success(service.sshSettings(ClientId));
+        if (this.permissionCheck(userID, userRole, clientId)) {
+            return RestBean.success(service.sshSettings(clientId));
         }
         return RestBean.noPermission();
     }

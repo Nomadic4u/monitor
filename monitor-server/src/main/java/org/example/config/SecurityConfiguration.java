@@ -61,7 +61,7 @@ public class SecurityConfiguration {
                                 .requestMatchers("api/auth/**", "/error").permitAll() //放行
                                 .requestMatchers("/terminal/**").permitAll() //放行
                                 .requestMatchers("/monitor/**").permitAll() //放行
-                                .requestMatchers("api/monitor/**").permitAll() //放行
+//                                .requestMatchers("api/monitor/**").permitAll() //放行
                                 .requestMatchers("api/user/sub/**").hasRole(Const.ROLE_ADMIN) // 创建子用户必须是管理员
                                 .anyRequest() // 任何请求都不允许通过
                                 .hasAnyRole(Const.ROLE_ADMIN, Const.ROLE_NORMAL)
@@ -113,7 +113,7 @@ public class SecurityConfiguration {
         response.setCharacterEncoding("utf-8");
         User user = (User) authentication.getPrincipal(); // 这里是SpringSecurity的user
         Account account = accountService.findAccountByNameOrEmail(user.getUsername());
-        String token = utils.CreateJwt(user, account.getId(), account.getUsername());
+        String token = utils.createJwt(user, account.getId(), account.getUsername());
         AuthorizeVO vo = account.asViewObject(AuthorizeVO.class, v -> {
             v.setExpire(utils.expireTime());
             v.setToken(token);

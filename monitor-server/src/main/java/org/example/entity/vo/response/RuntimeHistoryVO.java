@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 public class RuntimeHistoryVO {
 
-    double disl; // 磁盘总容量
+    double disk; // 磁盘总容量
 
     double memory; // 内存总容量
 
