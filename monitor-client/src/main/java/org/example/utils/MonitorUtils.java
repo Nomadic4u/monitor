@@ -50,19 +50,22 @@ public class MonitorUtils {
     public RuntimeDetail monitorRuntimeDetail() {
         double statisticTime = 0.5; // 统计时间, 由于oshi框架进度不是很够, 返回的数据其实是一段时间的平均值, 所以要给出统计时间
         try {
-            HardwareAbstractionLayer hardware = info.getHardware();
-            NetworkIF networkInterface = Objects.requireNonNull(this.findNetworkInterface(hardware));
-            CentralProcessor processor = hardware.getProcessor();
-            double upload = networkInterface.getBytesSent(), download = networkInterface.getBytesRecv();
+            HardwareAbstractionLayer hardware = info.getHardware(); // 获取硬件信息
+            NetworkIF networkInterface = Objects.requireNonNull(this.findNetworkInterface(hardware)); // 获取网络信息
+            CentralProcessor processor = hardware.getProcessor(); // 获取CPU信息
+            double upload = networkInterface.getBytesSent(), download = networkInterface.getBytesRecv(); // 获取网络上传和下载速度
             double read = hardware.getDiskStores().stream().mapToLong(HWDiskStore::getReadBytes).sum();
             double write = hardware.getDiskStores().stream().mapToLong(HWDiskStore::getWriteBytes).sum();
-            long[] ticks = processor.getSystemCpuLoadTicks();
-            Thread.sleep((long) (statisticTime * 1000));
+            long[] ticks = processor.getSystemCpuLoadTicks(); // 获取CPU时钟信息
+
+            Thread.sleep((long) (statisticTime * 1000)); // 睡眠0.5秒后再去获取
+
             networkInterface = Objects.requireNonNull(this.findNetworkInterface(hardware));
             upload = (networkInterface.getBytesSent() - upload) / statisticTime;
-            download =  (networkInterface.getBytesRecv() - download) / statisticTime;
+            download = (networkInterface.getBytesRecv() - download) / statisticTime;
             read = (hardware.getDiskStores().stream().mapToLong(HWDiskStore::getReadBytes).sum() - read) / statisticTime;
             write = (hardware.getDiskStores().stream().mapToLong(HWDiskStore::getWriteBytes).sum() - write) / statisticTime;
+
             double memory = (hardware.getMemory().getTotal() - hardware.getMemory().getAvailable()) / 1024.0 / 1024 / 1024;
             double disk = Arrays.stream(File.listRoots())
                     .mapToLong(file -> file.getTotalSpace() - file.getFreeSpace()).sum() / 1024.0 / 1024 / 1024;
@@ -72,7 +75,7 @@ public class MonitorUtils {
                     .setDiskUsage(disk)
                     .setNetworkUpload(upload / 1024)
                     .setNetworkDownload(download / 1024)
-                    .setDiskRead(read / 1024/ 1024)
+                    .setDiskRead(read / 1024 / 1024)
                     .setDiskWrite(write / 1024 / 1024)
                     .setTimestamp(new Date().getTime());
         } catch (Exception e) {
@@ -112,7 +115,7 @@ public class MonitorUtils {
             for (NetworkIF network : hardware.getNetworkIFs()) {
                 String[] ipv4Addr = network.getIPv4addr();
                 NetworkInterface ni = network.queryNetworkInterface();
-                if(!ni.isLoopback() && !ni.isPointToPoint() && ni.isUp() && !ni.isVirtual()
+                if (!ni.isLoopback() && !ni.isPointToPoint() && ni.isUp() && !ni.isVirtual()
                         && (ni.getName().startsWith("eth") || ni.getName().startsWith("en"))
                         && ipv4Addr.length > 0) {
                     return network;

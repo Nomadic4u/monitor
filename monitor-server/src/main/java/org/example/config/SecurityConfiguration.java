@@ -69,8 +69,8 @@ public class SecurityConfiguration {
                 )
                 .formLogin(conf -> conf
                         .loginProcessingUrl("/api/auth/login") //登录的路径 登录用户名默认为username
-                        .failureHandler(this::onAuthenticationFailure)
-                        .successHandler(this::onAuthenticationSuccess) // 登录成功
+                        .failureHandler(this::handleProcess)
+                        .successHandler(this::handleProcess) // 登录成功
                         .permitAll()
                 )
                 .logout(conf -> conf
@@ -78,8 +78,8 @@ public class SecurityConfiguration {
                         .logoutSuccessHandler(this::onLogoutSuccess) //退出成功
                 )
                 .exceptionHandling(conf -> conf
-                        .authenticationEntryPoint(this::onUnauthorized) //未登录
-                        .accessDeniedHandler(this::onAccessDeny)
+                        .accessDeniedHandler(this::handleProcess) // 未登录
+                        .authenticationEntryPoint(this::handleProcess)
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(conf -> conf
@@ -89,48 +89,49 @@ public class SecurityConfiguration {
                 .build();
     }
 
-
-    public void onAccessDeny(HttpServletRequest request,
-                             HttpServletResponse response,
-                             AccessDeniedException accessDeniedException) throws IOException {
-        response.setContentType("application/json");
-        response.getWriter().write(RestBean.forbidden(accessDeniedException.getMessage()).asJsonString());
-    }
-
-
-    public void onUnauthorized(HttpServletRequest request,
+    /**
+     * 将多种类型的Handler整合到同一个方法中，包含：
+     * - 登录成功
+     * - 登录失败
+     * - 未登录拦截/无权限拦截
+     * @param request 请求
+     * @param response 响应
+     * @param exceptionOrAuthentication 异常或是验证实体
+     * @throws IOException 可能的异常
+     */
+    private void handleProcess(HttpServletRequest request,
                                HttpServletResponse response,
-                               AuthenticationException exception) throws IOException {
-        response.setContentType("application/json");
-        response.getWriter().write(RestBean.unauthorized(exception.getMessage()).asJsonString());
+                               Object exceptionOrAuthentication) throws IOException {
+        response.setContentType("application/json;charset=utf-8");
+        PrintWriter writer = response.getWriter();
+        if(exceptionOrAuthentication instanceof AccessDeniedException exception) {
+            writer.write(RestBean
+                    .forbidden(exception.getMessage()).asJsonString());
+        } else if(exceptionOrAuthentication instanceof Exception exception) {
+            writer.write(RestBean
+                    .unauthorized(exception.getMessage()).asJsonString());
+        } else if(exceptionOrAuthentication instanceof Authentication authentication){
+            User user = (User) authentication.getPrincipal();
+            Account account = accountService.findAccountByNameOrEmail(user.getUsername());
+            String jwt = utils.createJwt(user, account.getId(), account.getUsername());
+            if(jwt == null) {
+                writer.write(RestBean.forbidden("登录验证频繁，请稍后再试").asJsonString());
+            } else {
+                AuthorizeVO vo = account.asViewObject(AuthorizeVO.class, o -> o.setToken(jwt));
+                vo.setExpire(utils.expireTime());
+                writer.write(RestBean.success(vo).asJsonString());
+            }
+        }
     }
 
 
-    public void onAuthenticationSuccess(HttpServletRequest request,
-                                        HttpServletResponse response,
-                                        Authentication authentication) throws IOException, ServletException {
-        response.setContentType("application/json"); // 告诉前端对应的格式
-        response.setCharacterEncoding("utf-8");
-        User user = (User) authentication.getPrincipal(); // 这里是SpringSecurity的user
-        Account account = accountService.findAccountByNameOrEmail(user.getUsername());
-        String token = utils.createJwt(user, account.getId(), account.getUsername());
-        AuthorizeVO vo = account.asViewObject(AuthorizeVO.class, v -> {
-            v.setExpire(utils.expireTime());
-            v.setToken(token);
-        });
-//        vo.setUsername("小明");
-//        BeanUtils.copyProperties(account, vo);
-        response.getWriter().write(RestBean.success(vo).asJsonString());
-    }
-
-    public void onAuthenticationFailure(HttpServletRequest request,
-                                        HttpServletResponse response,
-                                        AuthenticationException exception) throws IOException, ServletException {
-        response.setContentType("application/json");
-        response.setCharacterEncoding("utf-8");
-        response.getWriter().write(RestBean.unauthorized(exception.getMessage()).asJsonString());
-    }
-
+    /**
+     * 退出登录处理，将对应的Jwt令牌列入黑名单不再使用
+     * @param request 请求
+     * @param response 响应
+     * @param authentication 验证实体
+     * @throws IOException 可能的异常
+     */
     public void onLogoutSuccess(HttpServletRequest request,
                                 HttpServletResponse response,
                                 Authentication authentication) throws IOException, ServletException {
@@ -143,6 +144,50 @@ public class SecurityConfiguration {
             writer.write(RestBean.failure(400, "退出登录失败").asJsonString());
         }
     }
+
+
+
+
+//    public void onAccessDeny(HttpServletRequest request,
+//                             HttpServletResponse response,
+//                             AccessDeniedException accessDeniedException) throws IOException {
+//        response.setContentType("application/json");
+//        response.getWriter().write(RestBean.forbidden(accessDeniedException.getMessage()).asJsonString());
+//    }
+//
+//
+//    public void onUnauthorized(HttpServletRequest request,
+//                               HttpServletResponse response,
+//                               AuthenticationException exception) throws IOException {
+//        response.setContentType("application/json");
+//        response.getWriter().write(RestBean.unauthorized(exception.getMessage()).asJsonString());
+//    }
+//
+//
+//    public void onAuthenticationSuccess(HttpServletRequest request,
+//                                        HttpServletResponse response,
+//                                        Authentication authentication) throws IOException, ServletException {
+//        response.setContentType("application/json"); // 告诉前端对应的格式
+//        response.setCharacterEncoding("utf-8");
+//        User user = (User) authentication.getPrincipal(); // 这里是SpringSecurity的user
+//        Account account = accountService.findAccountByNameOrEmail(user.getUsername());
+//        String token = utils.createJwt(user, account.getId(), account.getUsername());
+//        AuthorizeVO vo = account.asViewObject(AuthorizeVO.class, v -> {
+//            v.setExpire(utils.expireTime());
+//            v.setToken(token);
+//        });
+////        vo.setUsername("小明");
+////        BeanUtils.copyProperties(account, vo);
+//        response.getWriter().write(RestBean.success(vo).asJsonString());
+//    }
+//
+//    public void onAuthenticationFailure(HttpServletRequest request,
+//                                        HttpServletResponse response,
+//                                        AuthenticationException exception) throws IOException, ServletException {
+//        response.setContentType("application/json");
+//        response.setCharacterEncoding("utf-8");
+//        response.getWriter().write(RestBean.unauthorized(exception.getMessage()).asJsonString());
+//    }
 
 }
 

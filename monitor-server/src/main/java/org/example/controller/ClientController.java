@@ -10,6 +10,9 @@ import org.example.service.ClientService;
 import org.example.utils.Const;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 用于客户机发送HTTP请求
+ */
 @RestController
 @RequestMapping("/monitor")
 public class ClientController {
@@ -19,13 +22,14 @@ public class ClientController {
 
     @GetMapping("/register")
     public RestBean<Void> registerClient(@RequestHeader("Authorization") String token) {
-        return clientService.verifyAndRegister(token) ? RestBean.success() : RestBean.failure(401, "token无效, 注册失败");
+        return clientService.verifyAndRegister(token) ?
+                RestBean.success() : RestBean.failure(401, "token无效, 注册失败");
     }
 
     @PostMapping("/detail")
-    public RestBean<Void> updateClientDetails(@RequestAttribute(Const.ATTR_CLIENT)Client client,
+    public RestBean<Void> updateClientDetails(@RequestAttribute(Const.ATTR_CLIENT) Client client,
                                               @RequestBody @Valid ClientDetailVO vo) {
-        clientService.updateClientDetails(vo,  client);
+        clientService.updateClientDetails(vo, client);
         return RestBean.success();
     }
 

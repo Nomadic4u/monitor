@@ -38,7 +38,7 @@ public class ServerConfiguration implements ApplicationRunner {
         if (config == null)
             config = this.registerToServer();
 //        System.out.println(monitor.monitorBaseDetail());
-        return config;
+        return config; //将值返回到Spring容器进行管理
     }
 
     @Override
