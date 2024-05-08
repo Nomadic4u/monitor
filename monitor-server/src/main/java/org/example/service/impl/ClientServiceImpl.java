@@ -104,6 +104,10 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         influxDbUtils.writeRuntimeData(client.getId(), vo);
     }
 
+    /**
+     * 获取首页卡片列表
+     * @return list
+     */
     @Override
     public List<ClientPreviewVO> listAllClient() {
 
@@ -122,7 +126,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 
     /**
      * 服务器改名
-     * @param vo
+     * @param vo 重命名服务器实体
      */
     @Override
     public void renameClient(RenameClientVO vo) {

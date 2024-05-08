@@ -4,15 +4,14 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.example.entity.RestBean;
 import org.example.entity.dto.Account;
+import org.example.entity.vo.request.RenameClientVO;
+import org.example.entity.vo.request.RenameNodeVO;
 import org.example.entity.vo.request.RuntimeDetailVO;
 import org.example.entity.vo.request.SshConnectionVO;
 import org.example.entity.vo.response.*;
-import org.example.entity.vo.request.RenameClientVO;
-import org.example.entity.vo.request.RenameNodeVO;
 import org.example.service.AccountService;
 import org.example.service.ClientService;
 import org.example.utils.Const;
-import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,12 +30,12 @@ public class MonitorController {
     AccountService accountService;
 
     @GetMapping("/list")
-    public RestBean<List<ClientPreviewVO>> listAllClient(@RequestAttribute(Const.ATTR_USER_ID) int userID,
+    public RestBean<List<ClientPreviewVO>> listAllClient(@RequestAttribute(Const.ATTR_USER_ID) int userId,
                                                          @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
         List<ClientPreviewVO> list = service.listAllClient(); // 先获取所有的客户端
         if (this.isAdminAccount(userRole))
             return RestBean.success(list);
-        List<Integer> ids = this.accountAccessClient(userID);
+        List<Integer> ids = this.accountAccessClient(userId); // 获取该用户能访问的客户机列表
         return RestBean.success(list.stream()
                 .filter(vo -> ids.contains(vo.getId())) // 这里采用过滤器, 去除用户没有权限去访问的主机
                 .toList());
