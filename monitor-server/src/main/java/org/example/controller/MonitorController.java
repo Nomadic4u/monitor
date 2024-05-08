@@ -29,6 +29,13 @@ public class MonitorController {
     @Resource
     AccountService accountService;
 
+    /**
+     * 首页服务器卡片展示
+     *
+     * @param userId   用户的id
+     * @param userRole 用户权限
+     * @return 服务器卡片信息列表
+     */
     @GetMapping("/list")
     public RestBean<List<ClientPreviewVO>> listAllClient(@RequestAttribute(Const.ATTR_USER_ID) int userId,
                                                          @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
@@ -41,14 +48,16 @@ public class MonitorController {
                 .toList());
     }
 
+    /**
+     * 用于新建子用户分配主机时展示
+     * @param userRole
+     * @return
+     */
     @GetMapping("/simple-list")
     public RestBean<List<ClientSimpleVO>> simpleClientList(@RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
         if (this.isAdminAccount(userRole))
             return RestBean.success(service.listSimpleList());
-        else {
-
-            return RestBean.noPermission();
-        }
+        return RestBean.noPermission();
     }
 
     @PostMapping("/rename")
@@ -144,6 +153,12 @@ public class MonitorController {
     }
 
 
+    /**
+     * 获取该用户能访问的服务器ID列表
+     *
+     * @param uid 用户id
+     * @return 服务器id列表
+     */
     private List<Integer> accountAccessClient(int uid) {
         Account account = accountService.getById(uid);
         return account.getClientList();
