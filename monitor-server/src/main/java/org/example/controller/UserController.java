@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 用户模块
+ */
 @RestController
 @RequestMapping("/api/user")
 public class UserController {

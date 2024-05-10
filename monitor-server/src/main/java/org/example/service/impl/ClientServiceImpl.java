@@ -198,8 +198,8 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 
     /**
      * 查询ssh连接信息
-     * @param clientId
-     * @return
+     * @param clientId 用户id
+     * @return ssh实体
      */
     @Override
     public SshSettingVO sshSettings(int clientId) {
@@ -226,6 +226,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         this.initClientCache();
     }
 
+    // 判断客户端是否还保持链接
     private boolean isOnline(RuntimeDetailVO runtime) {
         return runtime != null && System.currentTimeMillis() - runtime.getTimestamp() < 60 * 1000;
     }

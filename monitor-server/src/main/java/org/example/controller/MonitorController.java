@@ -49,9 +49,9 @@ public class MonitorController {
     }
 
     /**
-     * 用于新建子用户分配主机时展示
-     * @param userRole
-     * @return
+     * 用于新建子用户分配主机时展示主机列表
+     * @param userRole 用户权限
+     * @return 可用主机列表
      */
     @GetMapping("/simple-list")
     public RestBean<List<ClientSimpleVO>> simpleClientList(@RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
@@ -60,10 +60,18 @@ public class MonitorController {
         return RestBean.noPermission();
     }
 
+    /**
+     * 用于修改客户端名称
+     * @param vo 需要修改的客户端实体
+     * @param userID 当前的用户id
+     * @param userRole 当前的用户角色
+     * @return 是否修改成功
+     */
     @PostMapping("/rename")
     public RestBean<Void> renameClient(@RequestBody @Valid RenameClientVO vo,
                                        @RequestAttribute(Const.ATTR_USER_ID) int userID,
                                        @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
+//        先判断是否具有权限
         if (this.permissionCheck(userID, userRole, vo.getId())) {
             service.renameClient(vo);
             return RestBean.success();
@@ -71,6 +79,13 @@ public class MonitorController {
         return RestBean.noPermission();
     }
 
+    /**
+     * 客户端节点重命名
+     * @param vo 重命名节点实体
+     * @param userID 用户id
+     * @param userRole 角色用户
+     * @return 重命名是否成功
+     */
     @PostMapping("/node")
     public RestBean<Void> renameNode(@RequestBody @Valid RenameNodeVO vo,
                                      @RequestAttribute(Const.ATTR_USER_ID) int userID,
@@ -83,6 +98,13 @@ public class MonitorController {
     }
 
 
+    /**
+     * 用于在卡片内展示客户端详细信息
+     * @param clientId 客户端id
+     * @param userID 用户id
+     * @param userRole 用户角色
+     * @return 客户端详细信息
+     */
     @GetMapping("/details")
     public RestBean<ClientDetailsVO> details(int clientId,
                                              @RequestAttribute(Const.ATTR_USER_ID) int userID,
@@ -93,6 +115,13 @@ public class MonitorController {
         return RestBean.noPermission();
     }
 
+    /**
+     * 用于卡片内展示客户端历史运行信息
+     * @param clientId 客户端id
+     * @param userId 用户id
+     * @param userRole 用户角色
+     * @return 客户端历史运行信息
+     */
     @GetMapping("/runtime-history")
     public RestBean<RuntimeHistoryVO> runtimeDetailsHistory(int clientId,
                                                             @RequestAttribute(Const.ATTR_USER_ID) int userId,
@@ -104,6 +133,13 @@ public class MonitorController {
         return RestBean.noPermission();
     }
 
+    /**
+     * 用于卡片内展示客户端当前运行信息
+     * @param clientId 客户端id
+     * @param userID 用户id
+     * @param userRole 用户角色
+     * @return 客户端当前运行信息
+     */
     @GetMapping("/runtime-now")
     public RestBean<RuntimeDetailVO> runtimeDetailsNow(int clientId,
                                                        @RequestAttribute(Const.ATTR_USER_ID) int userID,
@@ -114,6 +150,11 @@ public class MonitorController {
         return RestBean.noPermission();
     }
 
+    /**
+     * 用于添加新主机页面, 显示token
+     * @param userRole
+     * @return
+     */
     @GetMapping("/register")
     public RestBean<String> registerToken(@RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
         if (this.isAdminAccount(userRole))
@@ -121,6 +162,12 @@ public class MonitorController {
         return RestBean.noPermission();
     }
 
+    /**
+     * 删除指定的客户端
+     * @param clientId 客户端id
+     * @param userRole 用户角色
+     * @return 是否删除成功
+     */
     @GetMapping("/delete")
     public RestBean<String> deleteClient(int clientId,
                                          @RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
@@ -131,6 +178,13 @@ public class MonitorController {
         return RestBean.noPermission();
     }
 
+    /**
+     * 保存ssh链接信息, 下次无需再次输入
+     * @param vo ssh连接实体
+     * @param userID 用户id
+     * @param userRole 用户角色
+     * @return 是否成功
+     */
     @PostMapping("/ssh-save")
     public RestBean<Void> saveSshConnection(@RequestBody @Valid SshConnectionVO vo,
                                             @RequestAttribute(Const.ATTR_USER_ID) int userID,
@@ -142,6 +196,13 @@ public class MonitorController {
         return RestBean.noPermission();
     }
 
+    /**
+     * 获取ssh连接信息
+     * @param clientId 客户端id
+     * @param userID 用户id
+     * @param userRole 用户角色
+     * @return ssh实体
+     */
     @GetMapping("/ssh")
     public RestBean<SshSettingVO> sshSettings(int clientId,
                                               @RequestAttribute(Const.ATTR_USER_ID) int userID,
