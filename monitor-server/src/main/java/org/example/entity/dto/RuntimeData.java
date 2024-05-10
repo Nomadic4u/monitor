@@ -7,6 +7,9 @@ import lombok.Data;
 
 import java.time.Instant;
 
+/**
+ * 运行时数据实体类
+ */
 @Data
 @Measurement(name = "runtime")
 public class RuntimeData {

@@ -17,8 +17,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -49,16 +47,16 @@ public class FlowLimitFilter extends HttpFilter {
 
     @Override
     protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        String adress = request.getRemoteAddr();
-        if (this.tryCount(adress)) {
+        String address = request.getRemoteAddr(); // 获取到IP
+        if (tryCount(address))
             chain.doFilter(request, response);
-        } else {
+        else
             this.writeBlockMessage(response);
-        }
     }
 
     /**
      * 为响应编写拦截内容，提示用户操作频繁
+     *
      * @param response 响应
      * @throws IOException 可能的异常
      */
@@ -71,12 +69,13 @@ public class FlowLimitFilter extends HttpFilter {
 
     /**
      * 尝试对指定IP地址请求计数, 如果被限制将无法继续访问
+     *
      * @param ip 请求IP地址
      * @return 是否操作成功
      */
     private boolean tryCount(String ip) {
         synchronized (ip.intern()) {
-            if (Boolean.TRUE.equals(template.hasKey(Const.FLOW_LIMIT_BLOCK + ip)))
+            if (Boolean.TRUE.equals(template.hasKey(Const.FLOW_LIMIT_BLOCK + ip))) // 是否被拉黑
                 return false;
             String counterKey = Const.FLOW_LIMIT_COUNTER + ip;
             String blockKey = Const.FLOW_LIMIT_BLOCK + ip;

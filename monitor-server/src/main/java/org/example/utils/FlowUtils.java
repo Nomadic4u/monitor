@@ -51,11 +51,12 @@ public class FlowUtils {
 
     /**
      * 值得一提的是 这个是先为internalCheck提供接口的实现类, 再由internalCheck传入参数供调用
+     *
      * @param counterKey 计数键
-     * @param blockKey 封禁键
-     * @param blockTime 封禁时间
-     * @param frequency 请求频率
-     * @param period 计数周期
+     * @param blockKey   封禁键
+     * @param blockTime  封禁时间
+     * @param frequency  请求频率
+     * @param period     计数周期
      * @return 是否通过限流检查
      */
     public boolean limitPeriodCheck(String counterKey, String blockKey, int blockTime, int frequency, int period) {

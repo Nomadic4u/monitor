@@ -32,7 +32,9 @@ public class CorsFilter extends HttpFilter {
     String methods;
 
     @Override
-    protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+    protected void doFilter(HttpServletRequest request,
+                            HttpServletResponse response,
+                            FilterChain chain) throws IOException, ServletException {
         this.addCorsHeader(request, response);
         chain.doFilter(request, response);
     }
