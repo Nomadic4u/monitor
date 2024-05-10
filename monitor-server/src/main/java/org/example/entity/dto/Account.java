@@ -13,6 +13,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 用户实体类
+ */
 @Data
 @TableName("db_account")
 @AllArgsConstructor

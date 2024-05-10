@@ -43,6 +43,8 @@ public class UserController {
 
     /**
      * 创建子用户
+     * @param vo 创建用户实体类
+     * @return 是否创建成功
      */
     @PostMapping("/sub/create")
     public RestBean<Void> createSubAccount(@RequestBody @Valid CreateSubAccountVO vo) {

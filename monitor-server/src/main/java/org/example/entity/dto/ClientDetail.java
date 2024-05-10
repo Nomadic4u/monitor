@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+/**
+ * 客户端细节实体类
+ */
 @Data
 @TableName("db_client_detail")
 public class ClientDetail {

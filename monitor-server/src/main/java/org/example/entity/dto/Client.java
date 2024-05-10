@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.example.entity.BaseData;
-
 import java.util.Date;
 
+/**
+ * 客户端基础信息实体类
+ */
 @Data
 @TableName("db_client")
 @AllArgsConstructor
