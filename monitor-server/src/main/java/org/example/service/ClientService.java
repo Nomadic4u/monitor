@@ -15,7 +15,7 @@ public interface ClientService extends IService<Client> {
 
     Client findClientByToken(String token);
 
-    String registerTOken();
+    String registerToken();
 
     void updateClientDetails(ClientDetailVO vo, Client client);
 

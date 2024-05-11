@@ -60,7 +60,7 @@ public class FlowUtils {
      * @return 是否通过限流检查
      */
     public boolean limitPeriodCheck(String counterKey, String blockKey, int blockTime, int frequency, int period) {
-        return this.internalCheck(counterKey, frequency, period, overclock -> {
+        return this.internalCheck(counterKey, frequency, period, (overclock) -> {
             if (overclock)
                 template.opsForValue().set(blockKey, "", blockTime, TimeUnit.SECONDS);
             return !overclock;

@@ -15,7 +15,6 @@ import org.example.mapper.ClientSshMapper;
 import org.example.service.ClientService;
 import org.example.utils.InfluxDbUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -50,12 +49,16 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         this.list().forEach(this::addClientCache);
     }
 
-
+    /**
+     * 验证和注册token
+     * @param token token
+     * @return 是否注册成功
+     */
     @Override
     public boolean verifyAndRegister(String token) {
         if (this.registerToken.equals(token)) {
             int id = this.randomClientId();
-            Client client = new Client(id, "未命名主机", token, "cn", "未命名节点",  new Date());
+            Client client = new Client(id, "未命名主机", token, "cn", "未命名节点", new Date());
             if (this.save(client)) {
                 registerToken = this.generateNewToken(); // 重新生成一下token
                 this.addClientCache(client);
@@ -76,7 +79,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
     }
 
     @Override
-    public String registerTOken() {
+    public String registerToken() {
         return registerToken;
     }
 
@@ -106,6 +109,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 
     /**
      * 获取首页卡片列表
+     *
      * @return list
      */
     @Override
@@ -116,7 +120,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
             BeanUtils.copyProperties(clientDetailMapper.selectById(vo.getId()), vo); // 缺失的数据再从数据库中查询
             RuntimeDetailVO runtimeDetailVo = currentRuntime.get(client.getId());
             // 如果最后一次更新的时间大于60秒, 说明已经离线了
-            if(runtimeDetailVo != null && System.currentTimeMillis() - runtimeDetailVo.getTimestamp() < 60 * 1000) {
+            if (runtimeDetailVo != null && System.currentTimeMillis() - runtimeDetailVo.getTimestamp() < 60 * 1000) {
                 BeanUtils.copyProperties(runtimeDetailVo, vo);
                 vo.setOnline(true);
             }
@@ -126,6 +130,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 
     /**
      * 服务器改名
+     *
      * @param vo 重命名服务器实体
      */
     @Override
@@ -134,6 +139,11 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         this.initClientCache();
     }
 
+    /**
+     * 卡片内展示客户端详细信息
+     * @param clientId 客户端id
+     * @return 客户端详细信息
+     */
     @Override
     public ClientDetailsVO clientDetails(int clientId) {
         ClientDetailsVO vo = this.clientIdCache.get(clientId).asViewObject(ClientDetailsVO.class);
@@ -144,8 +154,9 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 
     /**
      * 获取服务器近一个小时的数据
-     * @param clientId
-     * @return
+     *
+     * @param clientId 客户端id
+     * @return 客户端近一个小时的数据
      */
     @Override
     public RuntimeHistoryVO clientRuntimeDetailsHistory(int clientId) {
@@ -156,15 +167,20 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
     }
 
     /**
-     * 获取服务器当前的数据
-     * @param clientId
-     * @return
+     * 获取客户端当前的数据
+     *
+     * @param clientId 客户端id
+     * @return 客户端当前数据
      */
     @Override
     public RuntimeDetailVO clientRuntimeDetailsNow(int clientId) {
         return currentRuntime.get(clientId);
     }
 
+    /**
+     * 删除客户端
+     * @param clientId 客户端id
+     */
     @Override
     public void deleteClient(int clientId) {
         this.removeById(clientId);
@@ -173,6 +189,10 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         currentRuntime.remove(clientId);
     }
 
+    /**
+     * 给子用户分配主机时展示
+     * @return 主机列表
+     */
     @Override
     public List<ClientSimpleVO> listSimpleList() {
         return clientIdCache.values().stream().map(client -> {
@@ -182,14 +202,18 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         }).toList();
     }
 
+    /**
+     * 保存ssh连接信息
+     * @param vo ssh连接实体类
+     */
     @Override
     public void saveClientSshConnection(SshConnectionVO vo) {
         Client client = this.clientIdCache.get(vo.getId());
-        if(client == null)
+        if (client == null)
             return;
         ClientSsh ssh = new ClientSsh();
         BeanUtils.copyProperties(vo, ssh);
-        if(Objects.nonNull(clientSshMapper.selectById(client.getId()))) {
+        if (Objects.nonNull(clientSshMapper.selectById(client.getId()))) {
             clientSshMapper.updateById(ssh);
         } else {
             clientSshMapper.insert(ssh);
@@ -198,6 +222,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
 
     /**
      * 查询ssh连接信息
+     *
      * @param clientId 用户id
      * @return ssh实体
      */
@@ -206,7 +231,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
         ClientDetail detail = clientDetailMapper.selectById(clientId);
         ClientSsh ssh = clientSshMapper.selectById(clientId);
         SshSettingVO vo;
-        if(ssh == null) {
+        if (ssh == null) {
             vo = new SshSettingVO();
         } else {
             vo = ssh.asViewObject(SshSettingVO.class);
@@ -216,8 +241,9 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
     }
 
     /**
-     * 服务器节点重命名
-     * @param vo
+     * 客户端节点重命名
+     *
+     * @param vo 重命名实体类
      */
     @Override
     public void renameNode(RenameNodeVO vo) {
@@ -239,7 +265,7 @@ public class ClientServiceImpl extends ServiceImpl<ClientMapper, Client> impleme
     /**
      * 生成随机的clientId
      *
-     * @return
+     * @return ClientId
      */
     private int randomClientId() {
         return new Random().nextInt(90000000) + 10000000;

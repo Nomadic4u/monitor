@@ -158,7 +158,7 @@ public class MonitorController {
     @GetMapping("/register")
     public RestBean<String> registerToken(@RequestAttribute(Const.ATTR_USER_ROLE) String userRole) {
         if (this.isAdminAccount(userRole))
-            return RestBean.success(service.registerTOken());
+            return RestBean.success(service.registerToken());
         return RestBean.noPermission();
     }
 

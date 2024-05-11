@@ -126,7 +126,7 @@ public class TerminalWebSocket {
             try {
                 byte[] buffer = new byte[1024 * 1024];
                 int i;
-                while((i = input.read(buffer)) != -1) {
+                while ((i = input.read(buffer)) != -1) {
                     String text = new String(Arrays.copyOfRange(buffer, 0, i), StandardCharsets.UTF_8);
                     session.getBasicRemote().sendText(text);
                 }
@@ -138,12 +138,11 @@ public class TerminalWebSocket {
         @OnClose
         public void onClose(Session session) throws IOException {
             Shell shell = sessionMap.get(session);
-            if(shell != null) {
+            if (shell != null) {
                 session.close();
                 sessionMap.remove(session);
                 log.info("主机 {} 的SSH连接已断开", shell.js.getHost());
             }
-
 
 
         }

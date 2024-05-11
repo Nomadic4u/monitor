@@ -135,7 +135,9 @@ public class JwtUtils {
                     .withJWTId(UUID.randomUUID().toString())
                     .withClaim("id", id)
                     .withClaim("name", username)
-                    .withClaim("authorities", details.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
+                    .withClaim("authorities", details.getAuthorities()
+                            .stream()
+                            .map(GrantedAuthority::getAuthority).toList())
                     .withExpiresAt(expire) // 设置过期时间
                     .withIssuedAt(new Date()) // 颁发时间
                     .sign(algorithm); // 签名
