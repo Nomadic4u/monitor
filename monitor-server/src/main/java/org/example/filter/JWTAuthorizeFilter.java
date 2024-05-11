@@ -44,7 +44,7 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
         String authorization = request.getHeader("Authorization"); // 获取请求头中的信息
         String uri = request.getRequestURI();
         if (uri.startsWith("/monitor")) {
-            // 如果不是register, 直接通过token查询到client, 然后将client放入request中
+            // 如果不是客户端的register, 直接通过token查询到client, 然后将client放入request中
             if (!uri.endsWith("/register")) {
                 Client client = clientService.findClientByToken(authorization);
                 if (client == null) {
@@ -60,13 +60,16 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
             DecodedJWT jwt = utils.resolveJwt(authorization);
             if(jwt != null) {
                 UserDetails user = utils.toUser(jwt);
+                // 认证成功的令牌
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                // 将认定信息绑定到当前的HTTP请求中
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                // 将认证对象设置到上下文中
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 request.setAttribute(Const.ATTR_USER_ID, utils.toId(jwt));
                 request.setAttribute(Const.ATTR_USER_ROLE, new ArrayList<>(user.getAuthorities()).get(0).getAuthority());
-
+                // terminal用于ssh链接
                 if(request.getRequestURI().startsWith("/terminal/") && !accessShell(
                         (int) request.getAttribute(Const.ATTR_USER_ID),
                         (String) request.getAttribute(Const.ATTR_USER_ROLE),

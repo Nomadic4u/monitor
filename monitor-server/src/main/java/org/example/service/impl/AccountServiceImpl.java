@@ -98,7 +98,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return null;
     }
 
-    // 用户重置密码
+    // 登录页面用户重置密码
     @Override
     public String resetEmailAccountPassword(EmailResetVO vo) {
         String email = vo.getEmail();
@@ -114,6 +114,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return null;
     }
 
+    // 安全页面修改密码
     @Override
     public boolean changePassword(int id, String oldPassword, String newPassword) {
         Account account = this.getById(id);
@@ -129,6 +130,10 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return true;
     }
 
+    /**
+     * 创建子用户
+     * @param vo 子用户实体类
+     */
     @Override
     public void createSubAccount(CreateSubAccountVO vo) {
 //        System.out.println("vo: " + vo);
@@ -148,6 +153,10 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         this.removeById(uid);
     }
 
+    /**
+     * 获取当前账户的主机列表
+     * @return 主机列表
+     */
     @Override
     public List<SubAccountVO> listSubAccount() {
         return this.list(Wrappers.<Account>query().eq("role", Const.ROLE_NORMAL))
@@ -158,6 +167,12 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 }).toList();
     }
 
+    /**
+     * 更改用户邮箱
+     * @param id 用户id
+     * @param vo 更改邮箱实体类
+     * @return 是否更改成功
+     */
     @Override
     public String modifyEmail(int id, ModifyEmailVO vo) {
         String code = getEmailVerifyCode(vo.getEmail());

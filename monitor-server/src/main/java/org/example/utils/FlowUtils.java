@@ -2,7 +2,6 @@ package org.example.utils;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jsqlparser.expression.DateTimeLiteralExpression;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -23,13 +22,14 @@ public class FlowUtils {
 
     /**
      * 针对于单次频率限制, 请求成功后, 冷却时间内不能再吃进行请求, 如3s内不能再发起请求
+     * 如果redis中已经含有这个键了, 说明在重复访问
      *
      * @param key       键
      * @param blockTime 限制时间
      * @return 是否通过限流检查
      */
     public boolean limitOnceCheck(String key, int blockTime) {
-        return this.internalCheck(key, 1, blockTime, (overclock -> false));
+        return this.internalCheck(key, 1, blockTime, (overclock) -> false);
     }
 
     /**

@@ -34,7 +34,9 @@ public class RequestLogFilter extends OncePerRequestFilter {
             "/api/monitor/list", "/api/monitor/runtime-now");
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
         if (this.isIgnoreUrl(request.getServletPath())) {
             filterChain.doFilter(request, response);
         } else {
