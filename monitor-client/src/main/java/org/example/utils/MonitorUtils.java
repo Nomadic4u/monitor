@@ -25,15 +25,18 @@ public class MonitorUtils {
 
     private final SystemInfo info = new SystemInfo(); // 获取硬件信息
     private final Properties properties = System.getProperties();
-    ;
+
 
     public BaseDetail monitorBaseDetail() {
         OperatingSystem os = info.getOperatingSystem(); // 获取操作系统信息
         HardwareAbstractionLayer hardware = info.getHardware();
         double memory = hardware.getMemory().getTotal() / 1024.0 / 1024 / 1024; //返回的是字节
         double diskSize = Arrays.stream(File.listRoots()).mapToLong(File::getTotalSpace).sum() / 1024.0 / 1024 / 1024; // 使用JDK8的流API计算磁盘大小
-        String ip = Objects.requireNonNull(this.findNetworkInterface(hardware)).getIPv4addr()[0];
+//        String ip = Objects.requireNonNull(this.findNetworkInterface(hardware)).getIPv4addr()[0];
+        // 获取公网ip
+        String[] cmds={"curl","icanhazip.com"};//必须分开写，不能有空格
 
+        String ip = IPUtils.execCurl(cmds).trim();
         return new BaseDetail()
                 .setOsArch(properties.getProperty("os.arch"))
                 .setOsName(os.getFamily())

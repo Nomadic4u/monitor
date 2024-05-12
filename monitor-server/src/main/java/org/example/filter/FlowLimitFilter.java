@@ -48,10 +48,10 @@ public class FlowLimitFilter extends HttpFilter {
     @Override
     protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         String address = request.getRemoteAddr(); // 获取到IP
-        if (tryCount(address))
-            chain.doFilter(request, response);
-        else
+        if (!tryCount(address))
             this.writeBlockMessage(response);
+        else
+            chain.doFilter(request, response);
     }
 
     /**

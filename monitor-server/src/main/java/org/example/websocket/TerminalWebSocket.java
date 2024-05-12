@@ -8,7 +8,6 @@ import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
 import lombok.extern.slf4j.Slf4j;
-import org.example.entity.dto.Client;
 import org.example.entity.dto.ClientDetail;
 import org.example.entity.dto.ClientSsh;
 import org.example.mapper.ClientDetailMapper;
@@ -32,6 +31,7 @@ public class TerminalWebSocket {
 
     // 非单例的 不支持直接@Resource, 只能用set方法
 
+
     private static ClientDetailMapper detailMapper;
 
     @Resource
@@ -47,24 +47,20 @@ public class TerminalWebSocket {
     }
 
     private static final Map<Session, Shell> sessionMap = new ConcurrentHashMap<>();
-
     private final ExecutorService service = Executors.newSingleThreadExecutor();
 
     @OnOpen
     public void onOpen(Session session,
                        @PathParam(value = "clientId") String clientId) throws Exception {
-
         ClientDetail detail = detailMapper.selectById(clientId);
         ClientSsh ssh = sshMapper.selectById(clientId);
-        if (ssh == null || detail == null) {
+        if(detail == null || ssh == null) {
             session.close(new CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT, "无法识别此主机"));
             return;
         }
-
-        if (this.createSshConnection(session, ssh, detail.getIp())) {
+        if(this.createSshConnection(session, ssh, detail.getIp())) {
             log.info("主机 {} 的SSH连接已创建", detail.getIp());
         }
-
     }
 
     @OnMessage
@@ -75,26 +71,42 @@ public class TerminalWebSocket {
         output.flush();
     }
 
-    private boolean createSshConnection(Session session, ClientSsh ssh, String ip) throws IOException {
+    @OnClose
+    public void onClose(Session session) throws IOException {
+        Shell shell = sessionMap.get(session);
+        if(shell != null) {
+            shell.close();
+            sessionMap.remove(session);
+            log.info("主机 {} 的SSH连接已断开", shell.js.getHost());
+        }
+    }
+
+    @OnError
+    public void onError(Session session, Throwable error) throws IOException {
+        log.error("用户WebSocket连接出现错误", error);
+        session.close();
+    }
+
+    private boolean createSshConnection(Session session, ClientSsh ssh, String ip) throws IOException{
         try {
             JSch jSch = new JSch();
             com.jcraft.jsch.Session js = jSch.getSession(ssh.getUsername(), ip, ssh.getPort());
             js.setPassword(ssh.getPassword());
-            js.setConfig("StrictHostKeyChecking", "no"); // 防止连接后断开连接
+            js.setConfig("StrictHostKeyChecking", "no");
             js.setTimeout(3000);
             js.connect();
             ChannelShell channel = (ChannelShell) js.openChannel("shell");
             channel.setPtyType("xterm");
             channel.connect(1000);
             sessionMap.put(session, new Shell(session, js, channel));
-
+            return true;
         } catch (JSchException e) {
             String message = e.getMessage();
-            if (message.equals("Auth fail")) {
+            if(message.equals("Auth fail")) {
                 session.close(new CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT,
                         "登录SSH失败，用户名或密码错误"));
                 log.error("连接SSH失败，用户名或密码错误，登录失败");
-            } else if (message.contains("Connection refused")) {
+            } else if(message.contains("Connection refused")) {
                 session.close(new CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT,
                         "连接被拒绝，可能是没有启动SSH服务或是放开端口"));
                 log.error("连接SSH失败，连接被拒绝，可能是没有启动SSH服务或是放开端口");
@@ -131,26 +143,8 @@ public class TerminalWebSocket {
                     session.getBasicRemote().sendText(text);
                 }
             } catch (Exception e) {
-                log.error("读取SSH输入流时出现问题");
+                log.error("读取SSH输入流时出现问题", e);
             }
-        }
-
-        @OnClose
-        public void onClose(Session session) throws IOException {
-            Shell shell = sessionMap.get(session);
-            if (shell != null) {
-                session.close();
-                sessionMap.remove(session);
-                log.info("主机 {} 的SSH连接已断开", shell.js.getHost());
-            }
-
-
-        }
-
-        @OnError
-        public void onError(Session session, Throwable error) throws IOException {
-            log.error("用户WebSocket连接出现错误", error);
-            session.close();
         }
 
         public void close() throws IOException {
@@ -160,6 +154,5 @@ public class TerminalWebSocket {
             js.disconnect();
             service.shutdown();
         }
-
     }
 }
