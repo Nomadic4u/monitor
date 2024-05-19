@@ -1,6 +1,5 @@
 package org.example.config;
 
-import com.fasterxml.jackson.databind.util.BeanUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +12,6 @@ import org.example.filter.RequestLogFilter;
 import org.example.service.AccountService;
 import org.example.utils.Const;
 import org.example.utils.JwtUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.AccessDeniedException;
@@ -21,16 +19,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.SecurityFilterChain;
-
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 
 @Configuration
 public class SecurityConfiguration {
@@ -70,22 +63,22 @@ public class SecurityConfiguration {
                 .formLogin(conf -> conf
                         .loginProcessingUrl("/api/auth/login") //登录的路径 登录用户名默认为username
                         .failureHandler(this::handleProcess)
-                        .successHandler(this::handleProcess) // 登录成功
+                        .successHandler(this::handleProcess) // 登录成功处理器
                         .permitAll()
                 )
                 .logout(conf -> conf
                         .logoutUrl("/api/auth/logout") //退出的路径
-                        .logoutSuccessHandler(this::onLogoutSuccess) //退出成功
+                        .logoutSuccessHandler(this::onLogoutSuccess) //退出成功处理器
                 )
                 .exceptionHandling(conf -> conf
-                        .accessDeniedHandler(this::handleProcess) // 未登录
-                        .authenticationEntryPoint(this::handleProcess)
+                        .accessDeniedHandler(this::handleProcess) // 访问被拒绝处理器
+                        .authenticationEntryPoint(this::handleProcess) //
                 )
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable) // 禁用csrf防护
                 .sessionManagement(conf -> conf
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(requestLogFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthorizeFilter, RequestLogFilter.class) // 过滤器
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 会话管理设置为无状态
+                .addFilterBefore(requestLogFilter, UsernamePasswordAuthenticationFilter.class) // 设置日志过滤器
+                .addFilterBefore(jwtAuthorizeFilter, RequestLogFilter.class) // 设置JWT认证过滤器
                 .build();
     }
 

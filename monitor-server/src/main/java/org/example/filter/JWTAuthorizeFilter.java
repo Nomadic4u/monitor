@@ -53,14 +53,14 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
                     response.getWriter().write(RestBean.failure(401, "未注册").asJsonString());
                     return ;
                 } else {
-                    request.setAttribute(Const.ATTR_CLIENT, client);
+                    request.setAttribute(Const.ATTR_CLIENT, client); // 在HTTP请求中去设置一个键值对
                 }
             }
-        } else {
+        } else { // 前端的请求
             DecodedJWT jwt = utils.resolveJwt(authorization);
             if(jwt != null) {
                 UserDetails user = utils.toUser(jwt);
-                // 认证成功的令牌
+                // 认证成功的令牌. 拿到存贮用户认证信息的类
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                 // 将认定信息绑定到当前的HTTP请求中
@@ -69,7 +69,7 @@ public class JWTAuthorizeFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 request.setAttribute(Const.ATTR_USER_ID, utils.toId(jwt));
                 request.setAttribute(Const.ATTR_USER_ROLE, new ArrayList<>(user.getAuthorities()).get(0).getAuthority());
-                // terminal用于ssh链接
+                // terminal用于ssh链接, 判断当前用户是否有权限去ssh连接
                 if(request.getRequestURI().startsWith("/terminal/") && !accessShell(
                         (int) request.getAttribute(Const.ATTR_USER_ID),
                         (String) request.getAttribute(Const.ATTR_USER_ROLE),
